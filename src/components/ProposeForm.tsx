@@ -44,7 +44,7 @@ export default function ProposeForm({ onExit }: { onExit: () => void }) {
   const townExists = puzzles.some(
     (p) => answer.trim() && normalize(p.answer) === normalize(answer)
   );
-  
+
   const addEmoji = (emojiChar: string) => {
     const currentCount = countGraphemes(emojis);
     if (currentCount < MAX_EMOJIS) {
@@ -125,7 +125,7 @@ export default function ProposeForm({ onExit }: { onExit: () => void }) {
       </main>
     );
   }
-  
+
   const emojiCount = countGraphemes(emojis);
 
   return (
@@ -160,7 +160,6 @@ export default function ProposeForm({ onExit }: { onExit: () => void }) {
                   e.preventDefault();
                 }
               }}
-            placeholder="🔪⭕" />
               placeholder="Tria els emojis..."
               className="emoji-input-field"
             />
