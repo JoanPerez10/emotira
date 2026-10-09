@@ -123,7 +123,7 @@ export default function Game({
           : `${index + 1} / ${deck.length} · ${score} punts`}
       </p>
 
-      <div className="emojis">{puzzle.emojis}</div>
+      <div className="emojis emoji-flag">{puzzle.emojis}</div>
       {hintLines.map((h) => (
         <p key={h} className="hint">💡 {h}</p>
       ))}

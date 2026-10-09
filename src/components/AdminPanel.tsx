@@ -41,7 +41,7 @@ function Card({
 
   return (
     <div className="card">
-      <div className="emojis">{row.emojis}</div>
+      <div className="emojis emoji-flag">{row.emojis}</div>
       <p>
         <strong>{row.answer}</strong> — {row.explanation}
       </p>

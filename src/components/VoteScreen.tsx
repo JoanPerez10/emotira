@@ -125,7 +125,7 @@ export default function VoteScreen({ onExit }: { onExit: () => void }) {
         const t = tallies[p.id] ?? { up: 0, down: 0 };
         return (
           <div className="card" key={p.id}>
-            <div className="emojis">{p.emojis}</div>
+            <div className="emojis emoji-flag">{p.emojis}</div>
             <p>
               <strong>{p.answer}</strong> — {p.explanation}
             </p>
