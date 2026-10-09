@@ -63,3 +63,117 @@ select:focus-visible { outline: 3px solid var(--secondary); outline-offset: 2px;
 .card label { display: block; font-weight: 600; margin-top: 0.8rem; }
 .card input, .card select { margin-top: 0.3rem; }
 .tally { color: var(--muted); font-weight: 600; }
+
+/* Instagram / WhatsApp style Emoji Input Field */
+.emoji-field-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.3rem;
+}
+
+.emoji-count {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.emoji-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.2rem 0.6rem 0.2rem 0.8rem;
+  background: #fff;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  min-height: 48px;
+  transition: border-color 0.2s ease;
+}
+
+.emoji-input-wrapper:focus-within {
+  outline: 3px solid var(--secondary);
+  outline-offset: 2px;
+}
+
+.emoji-input-field {
+  flex: 1;
+  border: none !important;
+  outline: none !important;
+  padding: 0 !important;
+  font-size: 1.4rem !important;
+  letter-spacing: 0.1rem;
+  cursor: pointer;
+  background: transparent !important;
+  color: var(--text);
+}
+
+.emoji-input-field::placeholder {
+  font-size: 1.1rem;
+  letter-spacing: normal;
+  color: #757575;
+}
+
+.emoji-input-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+
+.emoji-action-btn {
+  background: transparent;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  font-size: 1.3rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+  line-height: 1;
+  color: var(--muted);
+  box-sizing: border-box;
+}
+
+.emoji-action-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.emoji-action-btn.active {
+  background: rgba(29, 78, 107, 0.12);
+  color: var(--secondary);
+}
+
+.backspace-btn {
+  font-size: 1.1rem;
+  color: var(--muted);
+}
+
+.emoji-picker-container {
+  margin-top: 0.5rem;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  animation: fadeIn 0.15s ease-out;
+}
+
+.emoji-picker-container .EmojiPickerReact {
+  --epr-bg-color: #fff;
+  --epr-category-icon-active-color: var(--secondary);
+  --epr-highlight-color: var(--secondary);
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  font-family: inherit !important;
+}
+
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+

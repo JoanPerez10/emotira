@@ -1,4 +1,5 @@
 import { useState } from "react";
+import EmojiPicker, { type EmojiClickData } from "emoji-picker-react";
 import { COMARQUES } from "../data/comarques";
 import { puzzles } from "../data/puzzles";
 import { normalize } from "../utils/normalize";
@@ -41,10 +42,30 @@ export default function ProposeForm({ onExit }: { onExit: () => void }) {
   const [honeypot, setHoneypot] = useState("");
   const [state, setState] = useState<State>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [showPicker, setShowPicker] = useState(false);
 
   const townExists = puzzles.some(
     (p) => answer.trim() && normalize(p.answer) === normalize(answer)
   );
+
+  const addEmoji = (emojiChar: string) => {
+    const currentCount = countGraphemes(emojis);
+    if (currentCount < MAX_EMOJIS) {
+      setEmojis((prev) => prev + emojiChar);
+      setError(null);
+    } else {
+      setError(`Màxim ${MAX_EMOJIS} emojis.`);
+    }
+  };
+
+  const removeLastEmoji = () => {
+    const segments = [...new Intl.Segmenter().segment(emojis)];
+    if (segments.length > 0) {
+      segments.pop();
+      setEmojis(segments.map((s) => s.segment).join(""));
+      setError(null);
+    }
+  };
 
   const validate = (): string | null => {
     const e = emojis.trim();
@@ -121,6 +142,8 @@ export default function ProposeForm({ onExit }: { onExit: () => void }) {
     );
   }
 
+  const emojiCount = countGraphemes(emojis);
+
   return (
     <main className="app">
       <div className="topbar">
@@ -134,14 +157,73 @@ export default function ProposeForm({ onExit }: { onExit: () => void }) {
         </p>
       )}
 
-      <div className="emojis small" aria-live="polite">{emojis || "❓"}</div>
-
       <form onSubmit={submit}>
         <div className="field">
-          <label htmlFor="p-emojis">Emojis</label>
-          <input id="p-emojis" value={emojis} onChange={(e) => setEmojis(e.target.value)}
-            placeholder="🔪⭕" />
+          <div className="emoji-field-header">
+            <label htmlFor="p-emojis">Emojis</label>
+            <span className="emoji-count">{emojiCount}/{MAX_EMOJIS}</span>
+          </div>
+
+          <div className="emoji-input-wrapper" onClick={() => setShowPicker(true)}>
+            <input
+              id="p-emojis"
+              value={emojis}
+              readOnly
+              onKeyDown={(e) => {
+                if (e.key === "Backspace") {
+                  e.preventDefault();
+                  removeLastEmoji();
+                } else {
+                  e.preventDefault();
+                }
+              }}
+              placeholder="Tria els emojis..."
+              className="emoji-input-field"
+            />
+            <div className="emoji-input-actions">
+              {emojis.length > 0 && (
+                <button
+                  type="button"
+                  className="emoji-action-btn backspace-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeLastEmoji();
+                  }}
+                  title="Esborra l'últim emoji"
+                  aria-label="Esborra l'últim emoji"
+                >
+                  ⌫
+                </button>
+              )}
+              <button
+                type="button"
+                className={`emoji-action-btn picker-trigger-btn ${showPicker ? "active" : ""}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowPicker((prev) => !prev);
+                }}
+                title={showPicker ? "Tancar cercador d'emojis" : "Obrir cercador d'emojis"}
+                aria-label="Selector d'emojis"
+              >
+                😀
+              </button>
+            </div>
+          </div>
+
+          {showPicker && (
+            <div className="emoji-picker-container">
+              <EmojiPicker
+                onEmojiClick={(emojiData: EmojiClickData) => addEmoji(emojiData.emoji)}
+                width="100%"
+                height={320}
+                searchPlaceHolder="Cerca un emoji..."
+                previewConfig={{ showPreview: false }}
+                skinTonesDisabled
+              />
+            </div>
+          )}
         </div>
+
         <div className="field">
           <label htmlFor="p-answer">Poble o ciutat</label>
           <input id="p-answer" value={answer} onChange={(e) => setAnswer(e.target.value)}
@@ -185,3 +267,4 @@ export default function ProposeForm({ onExit }: { onExit: () => void }) {
     </main>
   );
 }
+
