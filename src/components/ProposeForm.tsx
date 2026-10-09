@@ -2,10 +2,7 @@ import { useState } from "react";
 import { COMARQUES } from "../data/comarques";
 import { puzzles } from "../data/puzzles";
 import { normalize } from "../utils/normalize";
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
-const ENABLED = Boolean(SUPABASE_URL && SUPABASE_KEY);
+import { api, isMock } from "../api";
 
 const SENT_KEY = "pobles-emoji:proposals-sent";
 const MAX_PER_DAY = 5;
@@ -68,30 +65,18 @@ export default function ProposeForm({ onExit }: { onExit: () => void }) {
     }
     const err = validate();
     if (err) return setError(err);
-    if (recentSent().length >= MAX_PER_DAY)
+    if (!isMock && recentSent().length >= MAX_PER_DAY)
       return setError("Has enviat moltes propostes avui. Torna demà! 🙏");
 
     setError(null);
     setState("sending");
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/proposals`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            apikey: SUPABASE_KEY!,
-            ...(SUPABASE_KEY!.startsWith("eyJ")
-              ? { Authorization: `Bearer ${SUPABASE_KEY}` }
-              : {}),
-            Prefer: "return=minimal",
-        },
-        body: JSON.stringify({
-          emojis: emojis.replace(/\s/g, ""),
-          answer: answer.trim(),
-          explanation: explanation.trim(),
-          comarca: comarca || null,
-        }),
+      await api.submitProposal({
+        emojis: emojis.replace(/\s/g, ""),
+        answer: answer.trim(),
+        explanation: explanation.trim(),
+        comarca: comarca || null,
       });
-      if (!res.ok) throw new Error(String(res.status));
       markSent();
       setState("done");
     } catch {
@@ -128,7 +113,7 @@ export default function ProposeForm({ onExit }: { onExit: () => void }) {
         <strong>💡 Proposa un poble</strong>
       </div>
 
-      {!ENABLED && (
+      {!api.enabled && (
         <p className="error">
           Les propostes no estan configurades (falten les variables VITE_SUPABASE_*).
         </p>
@@ -177,7 +162,7 @@ export default function ProposeForm({ onExit }: { onExit: () => void }) {
         {error && <p className="error" role="alert">{error}</p>}
 
         <div className="actions">
-          <button type="submit" disabled={!ENABLED || state === "sending"}>
+          <button type="submit" disabled={!api.enabled || state === "sending"}>
             {state === "sending" ? "Enviant…" : "Enviar proposta"}
           </button>
         </div>
