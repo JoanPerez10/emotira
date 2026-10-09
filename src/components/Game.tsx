@@ -17,6 +17,8 @@ interface Props {
   pool: Puzzle[];
   onFinish: (r: GameResult) => void;
   onExit: () => void;
+  /** Es crida en el moment d'encertar un poble (útil per desar-lo a la col·lecció). */
+  onSolve?: (answer: string) => void;
 }
 
 const MAX_FAILS = 3;
@@ -29,6 +31,7 @@ export default function Game({
   hard = false,
   onFinish,
   onExit,
+  onSolve,
 }: Props) {
   const [deck, setDeck] = useState(initialDeck);
   const [index, setIndex] = useState(0);
@@ -74,6 +77,7 @@ export default function Game({
     if (accepted.includes(normalize(guess))) {
       setWrong(false);
       settle("correct");
+      onSolve?.(puzzle.answer);
       return;
     }
     if (hard) {

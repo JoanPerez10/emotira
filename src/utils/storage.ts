@@ -8,6 +8,7 @@ export const emptyRecords = (): Records => ({
   ten: { played: 0, best: 0 },
   hard: { played: 0, best: 0 },
   infinite: { played: 0, bestSolved: 0, bestStreak: 0 },
+  unlockedTowns: [],
 });
 
 export function loadRecords(): Records {
@@ -21,6 +22,10 @@ export function loadRecords(): Records {
       ten: { ...base.ten, ...p.ten },
       hard: { ...base.hard, ...p.hard },
       infinite: { ...base.infinite, ...p.infinite },
+      // Les dades guardades abans de la Col·lecció no tenen aquest camp
+      unlockedTowns: Array.isArray(p.unlockedTowns)
+        ? [...new Set<string>(p.unlockedTowns.filter((t: unknown) => typeof t === "string"))]
+        : [],
     };
   } catch {
     return emptyRecords();
@@ -33,6 +38,12 @@ export function saveRecords(r: Records) {
   } catch {
     /* sense emmagatzematge: el joc segueix funcionant */
   }
+}
+
+// Afegeix un poble a la col·lecció global; si ja hi era, retorna el mateix objecte
+export function unlockTown(prev: Records, answer: string): Records {
+  if (prev.unlockedTowns.includes(answer)) return prev;
+  return { ...prev, unlockedTowns: [...prev.unlockedTowns, answer] };
 }
 
 // La ratxa només compta si ahir o avui s'ha jugat el diari

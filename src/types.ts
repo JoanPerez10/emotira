@@ -22,4 +22,6 @@ export interface Records {
   ten: { played: number; best: number };
   hard: { played: number; best: number };
   infinite: { played: number; bestSolved: number; bestStreak: number };
+  /** Respostes (`puzzle.answer`) de tots els pobles encertats, en qualsevol mode. Sense duplicats. */
+  unlockedTowns: string[];
 }
