@@ -85,7 +85,7 @@ export default function Collection({ pool, unlocked, onExit }: Props) {
   return (
     <main className="app collection">
       <div className="topbar">
-        <button className="ghost" onClick={onExit}>← Menú</button>
+        <button className="back" onClick={onExit}>← Menú</button>
         <strong>🗺️ Col·lecció</strong>
       </div>
 

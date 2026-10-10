@@ -17,6 +17,7 @@ import "./App.css";
 import { api } from "./api";
 import AdminPanel from "./components/AdminPanel";
 import VoteScreen from "./components/VoteScreen";
+import Icon, { type IconName } from "./components/Icon";
 
 // El mapa de municipis pesa ~125 KB: només es descarrega en obrir la Col·lecció
 const Collection = lazy(() => import("./components/Collection"));
@@ -32,10 +33,54 @@ type Screen =
   | "collection";
 
 const TITLES: Record<Mode, string> = {
-  daily: "📅 Repte diari",
-  ten: "🔟 Endivina 10",
-  infinite: "♾️ Mode infinit",
-  hard: "🔥 Mode difícil",
+  daily: "Repte diari",
+  ten: "Endivina 10",
+  infinite: "Mode infinit",
+  hard: "Mode difícil",
+};
+
+const MODE_ICONS: Record<Mode, IconName> = {
+  daily: "calendar",
+  ten: "target",
+  infinite: "infinity",
+  hard: "flame",
+};
+
+interface ModeMeta {
+  mode: Mode;
+  icon: IconName;
+  title: string;
+  sub: string;
+  /** Paleta de la targeta: fons suau, icona i vora en to de marca. */
+  variant: "blue" | "orange" | "coral" | "purple";
+}
+
+const MODES: ModeMeta[] = [
+  { mode: "ten", icon: "target", title: "Endivina 10", sub: "10 pobles d'una tirada", variant: "blue" },
+  { mode: "hard", icon: "flame", title: "Mode difícil", sub: "Sense pistes i 3 intents", variant: "coral" },
+  { mode: "infinite", icon: "infinity", title: "Mode infinit", sub: "Fins que et cansis", variant: "purple" },
+];
+
+/** Converteix una puntuació en estrelles (0-3), com a Duolingo. */
+const starsFor = (score: number, max: number) => {
+  const pct = max > 0 ? score / max : 0;
+  return pct >= 0.9 ? 3 : pct >= 0.6 ? 2 : pct >= 0.3 ? 1 : 0;
+};
+
+const medalFor = (stars: number) =>
+  stars >= 3 ? "🏆" : stars === 2 ? "🥈" : stars === 1 ? "🥉" : "🌱";
+
+/**
+ * Primer emoji d'una pista, sencer. Cal segmentar per grafemes: hi ha
+ * seqüències ZWJ (👩‍🦰, 🏊‍♀️) que `slice(0, 1` partiria per la meitat.
+ */
+const firstEmoji = (s: string) => {
+  if (typeof Intl !== "undefined" && "Segmenter" in Intl) {
+    const seg = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+    const it = seg.segment(s)[Symbol.iterator]().next();
+    return it.done ? "" : it.value.segment;
+  }
+  return Array.from(s)[0] ?? "";
 };
 
 export default function App() {
@@ -99,7 +144,7 @@ export default function App() {
   const share = async () => {
     const h = records.daily.history[todayKey()];
     if (!h) return;
-    const text = `🏘️ Pobles Emoji ${todayKey()}\n${h.score}/${h.max}\n${h.results}`;
+    const text = `🧩 Emotira ${todayKey()}\n${h.score}/${h.max}\n${h.results}`;
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
@@ -120,6 +165,7 @@ export default function App() {
       <Game
         key={`${mode}-${deck.length}-${deck[0]?.answer}`}
         title={TITLES[mode]}
+        icon={MODE_ICONS[mode]}
         deck={deck}
         pool={pool}
         endless={mode === "infinite"}
@@ -133,25 +179,46 @@ export default function App() {
 
   if (screen === "result" && result) {
     const solved = result.results.filter((r) => r.status === "correct").length;
+    const stars = starsFor(result.score, result.max);
+    const isDaily = mode === "daily";
     return (
       <main className="app">
-        <h1>🏁 {TITLES[mode]}</h1>
-        <p className="big">
-          {result.score} / {result.max} punts
-        </p>
-        <p>
-          {solved} de {result.results.length} encertats
-        </p>
-        {isBest && <p className="best">🏆 Nou rècord!</p>}
-        {mode === "daily" && todayResult && (
+        <div className="score-card">
+          <span className="medal" aria-hidden="true">{medalFor(stars)}</span>
+          <h1>{TITLES[mode]}</h1>
+          <p className="stars" role="img" aria-label={`${stars} de 3 estrelles`}>
+            {["⭐", "⭐", "⭐"].map((s, i) => (
+              <span key={i} style={{ opacity: i < stars ? 1 : 0.25 }} aria-hidden="true">{s}</span>
+            ))}
+          </p>
+          <p className="big">
+            {result.score} <span className="progress">/ {result.max}</span>
+          </p>
+          <p className="progress">
+            Has encertat {solved} de {result.results.length} pobles
+          </p>
+          {isBest && (
+            <p className="best">
+              <Icon name="trophy" size={18} /> Millor marca personal!
+            </p>
+          )}
+        </div>
+
+        {isDaily && todayResult && (
           <>
             <p className="emojis small">{todayResult.results}</p>
-            <button onClick={share}>{copied ? "Copiat! ✅" : "Compartir"}</button>
-            <p className="streak">🔥 Ratxa: {currentStreak(records)} dies</p>
+            <div className="actions">
+              <button onClick={share}>
+                <Icon name={copied ? "check" : "share"} size={18} />
+                {copied ? "Copiat" : "Compartir el resultat"}
+              </button>
+            </div>
+            <p className="streak">Ratxa: {currentStreak(records)} dies</p>
           </>
         )}
+
         <div className="actions">
-          {mode !== "daily" && <button onClick={() => start(mode)}>Tornar a jugar</button>}
+          {!isDaily && <button onClick={() => start(mode)}>Tornar a jugar</button>}
           <button className="secondary" onClick={() => setScreen("menu")}>Menú</button>
         </div>
       </main>
@@ -175,6 +242,7 @@ export default function App() {
   if (screen === "vote") {
     return <VoteScreen onExit={() => setScreen("menu")} />;
   }
+
   if (screen === "collection") {
     return (
       <Suspense fallback={<main className="app"><p className="progress">Carregant el mapa…</p></main>}>
@@ -190,60 +258,125 @@ export default function App() {
     const { daily, ten, hard, infinite } = records;
     return (
       <main className="app">
-        <h1>🏆 Rècords</h1>
+        <div className="topbar">
+          <button className="back" onClick={() => setScreen("menu")}>← Menú</button>
+          <strong>Rècords</strong>
+        </div>
         <section className="stats">
-          <h3>📅 Repte diari</h3>
-          <p>Ratxa actual: <b>{currentStreak(records)}</b></p>
-          <p>Millor ratxa: <b>{daily.bestStreak}</b></p>
-          <p>Jugats: <b>{daily.played}</b></p>
+          <h3><Icon name="calendar" size={18} /> Repte diari</h3>
+          <p>Ratxa actual: <b>{currentStreak(records)}</b> dies</p>
+          <p>Millor ratxa: <b>{daily.bestStreak}</b> dies</p>
+          <p>Reptes jugats: <b>{daily.played}</b></p>
         </section>
         <section className="stats">
-          <h3>🔟 Endivina 10</h3>
+          <h3><Icon name="target" size={18} /> Endivina 10</h3>
           <p>Millor puntuació: <b>{ten.best} / 30</b></p>
           <p>Partides: <b>{ten.played}</b></p>
         </section>
         <section className="stats">
-          <h3>🔥 Mode difícil</h3>
+          <h3><Icon name="flame" size={18} /> Mode difícil</h3>
           <p>Millor puntuació: <b>{hard.best} / 30</b></p>
           <p>Partides: <b>{hard.played}</b></p>
         </section>
         <section className="stats">
-          <h3>♾️ Mode infinit</h3>
+          <h3><Icon name="infinity" size={18} /> Mode infinit</h3>
           <p>Millor ratxa d'encerts: <b>{infinite.bestStreak}</b></p>
           <p>Més encerts en una partida: <b>{infinite.bestSolved}</b></p>
           <p>Partides: <b>{infinite.played}</b></p>
         </section>
+        {/* El retorn al menú ja hi és a la barra superior: aquí només
+            l'acció destructiva, que no es pot posar al costat de l'ull. */}
         <div className="actions">
-          <button className="secondary" onClick={() => setScreen("menu")}>← Menú</button>
-          <button className="ghost" onClick={resetRecords}>Esborrar</button>
+          <button className="danger-text" onClick={resetRecords}>Esborrar tots els rècords</button>
         </div>
       </main>
     );
   }
 
+  const streak = currentStreak(records);
+  const found = records.unlockedTowns.length;
+
   return (
     <main className="app">
-      <h1>🏘️ Pobles Emoji</h1>
-      <p>Endevina el poble o ciutat de Catalunya!</p>
-      <p className="streak">🔥 Ratxa diària: {currentStreak(records)}</p>
+      <header className="hero">
+        <img
+          className="hero-fox"
+          src="/assets/main_menu_guini.png"
+          alt=""
+          width={217}
+          height={315}
+          draggable={false}
+        />
+        <div className="hero-copy">
+          <h1>Emotira</h1>
+          <p>Endevina què és amb només emojis</p>
+          <div className="chips">
+            <span className="chip chip-fire">Ratxa: {streak} {streak === 1 ? "dia" : "dies"}</span>
+            <span className="chip chip-map">{found} {found === 1 ? "poble" : "pobles"} trobats</span>
+          </div>
+        </div>
+      </header>
 
-      <div className="menu">
+      <nav className="menu" aria-label="Modes de joc">
+        {/* ── Repte diari: la portada, sempre la mateixa cada dia ── */}
         {todayResult ? (
-          <div className="done">
-            ✅ Repte diari fet: {todayResult.score}/{todayResult.max}{" "}
-            {todayResult.results}
-            <button className="ghost" onClick={share}>{copied ? "Copiat!" : "Compartir"}</button>
+          <div className="daily-card is-done">
+            <div className="daily-head">
+              <span className="daily-title">Avui ja has jugat</span>
+              <span className="daily-score">
+                {todayResult.score}/{todayResult.max}
+              </span>
+            </div>
+            <p className="daily-squares">{todayResult.results}</p>
+            <button type="button" className="share-btn" onClick={share}>
+              <Icon name={copied ? "check" : "share"} size={18} />
+              {copied ? "Copiat" : "Compartir resultat"}
+            </button>
           </div>
         ) : (
-          <button onClick={() => start("daily")}>📅 Repte diari (5 pobles)</button>
+          <button className="daily-card" onClick={() => start("daily")}>
+            <div className="daily-head">
+              <span className="daily-icon">
+                <Icon name="calendar" size={22} />
+              </span>
+              <span className="daily-title">Repte diari</span>
+              <span className="daily-badge">Avui</span>
+            </div>
+            <p className="daily-squares">
+              {dailyPuzzles()
+                .slice(0, 5)
+                .map((p) => firstEmoji(p.emojis))
+                .join("")}
+            </p>
+            <span className="daily-cta">Jugar ara</span>
+          </button>
         )}
-        <button onClick={() => start("ten")}>🔟 Endivina 10</button>
-        <button onClick={() => start("hard")}>🔥 Mode difícil (sense pistes)</button>
-        <button onClick={() => start("infinite")}>♾️ Mode infinit</button>
-        <button className="secondary" onClick={() => setScreen("records")}>🏆 Rècords</button>
-        <button className="secondary" onClick={() => setScreen("collection")}>🗺️ Col·lecció</button>
-        <button className="secondary" onClick={() => setScreen("propose")}>💡 Proposa un poble</button>
-        <button className="secondary" onClick={() => setScreen("vote")}>🗳️ Vota propostes</button>
+
+        {/* ── La resta, en graella de dues columnes ── */}
+        <div className="grid">
+          {MODES.map(({ mode: m, icon, title, sub, variant }) => (
+            <button key={m} className={`mode-card v-${variant}`} onClick={() => start(m)}>
+              <span className="mode-icon">
+                <Icon name={icon} size={21} />
+              </span>
+              <span className="mode-title">{title}</span>
+              <span className="mode-sub">{sub}</span>
+            </button>
+          ))}
+          <button className="mode-card v-blue" onClick={() => setScreen("collection")}>
+            <span className="mode-icon">
+              <Icon name="map" size={21} />
+            </span>
+            <span className="mode-title">Col·lecció</span>
+            <span className="mode-sub">El mapa de pobles</span>
+          </button>
+        </div>
+      </nav>
+
+      <div className="menu-links">
+        <button className="ghost" onClick={() => setScreen("records")}>Els teus rècords</button>
+        <button className="ghost" onClick={() => setScreen("propose")}>Proposa un poble</button>
+        <button className="ghost" onClick={() => setScreen("vote")}>Vota propostes</button>
       </div>
     </main>
   );
