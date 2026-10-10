@@ -1,7 +1,7 @@
 # Emotira
 
 Endevina què és amb només emojis. Joc de preguntes tipus Wordle fet amb React,
-TypeScript i Vite. El mascott és la Guineu.
+TypeScript i Vite. La mascota és la Guineu.
 
 ## Marca
 
