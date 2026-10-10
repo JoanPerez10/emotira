@@ -181,3 +181,104 @@ select:focus-visible { outline: 3px solid var(--secondary); outline-offset: 2px;
 .dev-banner { position: sticky; top: 0; z-index: 10; background: #fde68a; color: #3b2a00;
   padding: 0.5rem 1rem; text-align: center; font-size: 0.9rem; border-bottom: 2px solid #8a4b00; }
 .dev-banner .ghost { color: #3b2a00; margin-left: 0.5rem; padding: 0.2rem 0.5rem; }
+
+/* ── Col·lecció ─────────────────────────────────────────── */
+.app.collection { max-width: 960px; }
+
+.coll-progress { background: #fff; border-radius: 8px; padding: 0.8rem 1rem; margin: 0.8rem 0;
+  text-align: left; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15); }
+.coll-progress-main { margin: 0 0 0.5rem; font-size: 1.15rem; }
+.coll-progress-main b { font-size: 1.7rem; color: #15803d; }
+.coll-pct { color: var(--muted); }
+.coll-bar { height: 10px; background: #e5e1d8; border-radius: 999px; overflow: hidden; }
+.coll-bar span { display: block; height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, #22c55e, #16a34a); transition: width 0.4s ease; }
+
+.map-legend { display: flex; gap: 1rem; justify-content: center; margin: 0.6rem 0;
+  color: var(--muted); font-size: 0.9rem; }
+.dot { display: inline-block; width: 0.8rem; height: 0.8rem; border-radius: 3px; background: #8c8f94;
+  margin-right: 0.3rem; vertical-align: -1px; }
+.dot-on { background: #22c55e; }
+
+.map-frame { width: 100%; max-width: min(100%, calc(78vh * var(--map-aspect, 1))); margin: 0 auto;
+  background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15); }
+.map-stage { position: relative; background: #e8eef2; line-height: 0; }
+.map-svg { display: block; width: 100%; height: auto; touch-action: pan-y;
+  user-select: none; -webkit-user-select: none; }
+.map-svg.zoomed { touch-action: none; cursor: grab; }
+.map-svg.dragging { cursor: grabbing; }
+.muni { fill: #8c8f94; stroke: #fffaf0; stroke-width: 0.5px; vector-effect: non-scaling-stroke;
+  fill-rule: evenodd; cursor: pointer; }
+.muni-on { fill: #22c55e; stroke: #14532d; stroke-width: 1px; }
+.muni-focus { fill: rgba(29, 78, 107, 0.35); stroke: var(--secondary); stroke-width: 2px;
+  vector-effect: non-scaling-stroke; fill-rule: evenodd; pointer-events: none; }
+.muni-selected { stroke: #0f2e40; stroke-width: 2.5px; fill: rgba(29, 78, 107, 0.2); }
+
+.map-controls { position: absolute; top: 0.5rem; right: 0.5rem; display: flex; flex-direction: column;
+  gap: 0.3rem; line-height: 1; }
+.map-controls button { width: 36px; height: 36px; padding: 0; border-radius: 6px; background: #fff;
+  color: var(--text); border: 1px solid #c4c4c4; font-size: 1.2rem; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15); }
+.map-controls button:hover:not(:disabled) { background: #eef3f6; }
+.map-controls button:disabled { background: #f3f3f3; color: #8f8f8f; box-shadow: none; }
+
+.map-info { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 0.9rem; min-height: 5.2rem;
+  box-sizing: border-box; text-align: left; border-top: 1px solid #eee; }
+.map-info-emoji { font-size: 1.8rem; line-height: 1; white-space: nowrap; }
+.map-info-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.map-info-text strong { font-size: 1.05rem; overflow-wrap: anywhere; }
+.map-info-text span { color: var(--muted); font-size: 0.9rem; }
+.map-info-text em { color: var(--accent-text); font-size: 0.85rem; font-style: normal; }
+.badge { padding: 0.25rem 0.65rem; border-radius: 999px; background: #e9e7e1; color: #3d3d3d;
+  font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+.badge-on { background: var(--success-bg); color: var(--success-text); }
+.map-hint { margin: 0; color: var(--muted); font-size: 0.9rem; }
+
+.coll-list { margin-top: 1.5rem; text-align: left; }
+.coll-list-head { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.coll-list-head h2 { margin: 0; font-size: 1.25rem; }
+.list-toggle { background: var(--secondary); }
+.list-toggle:hover:not(:disabled) { background: var(--secondary-hover); }
+
+.coll-filters .field { margin: 0.7rem 0; }
+.coll-filters-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+.seg { display: flex; border: 2px solid var(--border); border-radius: 8px; overflow: hidden; background: #fff; }
+.seg button { flex: 1; border-radius: 0; background: transparent; color: var(--text); padding: 0.6rem 0.3rem;
+  font-weight: 600; font-size: 0.95rem; border-right: 1px solid #d9d9d9; }
+.seg button:last-child { border-right: 0; }
+.seg button span { color: var(--muted); font-weight: 500; margin-left: 0.15rem; }
+.seg button:hover:not(:disabled):not(.active) { background: rgba(0, 0, 0, 0.06); }
+.seg button.active { background: var(--secondary); color: #fff; }
+.seg button.active span { color: #dbe7ef; }
+.seg button:focus-visible { outline-offset: -4px; }
+
+.coll-count { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin: 0.9rem 0 0.5rem;
+  color: var(--muted); font-size: 0.9rem; }
+.coll-count .ghost { padding: 0.2rem 0.5rem; font-size: 0.9rem; color: var(--secondary); }
+
+.town-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.7rem;
+  grid-template-columns: repeat(3, 1fr); }
+.town-card { display: flex; align-items: center; gap: 0.7rem; padding: 0.7rem 0.8rem; background: #fff;
+  border-radius: 8px; border-left: 5px solid #c4c4c4; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15); }
+.town-on { border-left-color: #22c55e; }
+.town-off { background: #f6f4ee; }
+.town-emoji { font-size: 1.9rem; line-height: 1; white-space: nowrap; }
+.town-off .town-emoji { filter: grayscale(1) blur(1.5px); opacity: 0.5; }
+.town-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.town-body strong { overflow-wrap: anywhere; }
+.town-off .town-body strong { color: var(--muted); }
+.town-body span { color: var(--muted); font-size: 0.88rem; }
+.town-body em { color: var(--accent-text); font-size: 0.82rem; font-style: normal; }
+.town-status { font-size: 1.2rem; }
+
+.coll-credit { margin-top: 1.5rem; text-align: center; }
+
+@media (max-width: 768px) {
+  .town-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 560px) {
+  .coll-filters-row { grid-template-columns: 1fr; gap: 0; }
+  .map-info { gap: 0.55rem; padding: 0.6rem 0.7rem; }
+  .town-grid { grid-template-columns: 1fr; }
+}
+

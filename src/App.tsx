@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import Game from "./components/Game";
 import ProposeForm from "./components/ProposeForm";
 import { puzzles, type Puzzle } from "./data/puzzles";
@@ -11,13 +11,25 @@ import {
   loadRecords,
   recordResult,
   saveRecords,
+  unlockTown,
 } from "./utils/storage";
 import "./App.css";
 import { api } from "./api";
 import AdminPanel from "./components/AdminPanel";
 import VoteScreen from "./components/VoteScreen";
 
-type Screen = "menu" | "records" | "play" | "result" | "propose" | "vote" | "admin";
+// El mapa de municipis pesa ~125 KB: només es descarrega en obrir la Col·lecció
+const Collection = lazy(() => import("./components/Collection"));
+
+type Screen =
+  | "menu"
+  | "records"
+  | "play"
+  | "result"
+  | "propose"
+  | "vote"
+  | "admin"
+  | "collection";
 
 const TITLES: Record<Mode, string> = {
   daily: "📅 Repte diari",
@@ -65,6 +77,15 @@ export default function App() {
     setScreen("play");
   };
 
+  // Es desa en el moment d'encertar (no al final de la partida), així no es perd
+  // res si el jugador surt al menú a mig joc.
+  const onSolve = (answer: string) => {
+    const next = unlockTown(records, answer);
+    if (next === records) return;
+    setRecords(next);
+    saveRecords(next);
+  };
+
   const finish = (res: GameResult) => {
     const { records: next, isBest } = recordResult(records, mode, res);
     setRecords(next);
@@ -88,7 +109,7 @@ export default function App() {
   };
 
   const resetRecords = () => {
-    if (!confirm("Vols esborrar tots els rècords?")) return;
+    if (!confirm("Vols esborrar tots els rècords i la col·lecció de pobles descoberts?")) return;
     const e = emptyRecords();
     setRecords(e);
     saveRecords(e);
@@ -104,6 +125,7 @@ export default function App() {
         endless={mode === "infinite"}
         hard={mode === "hard"}
         onFinish={finish}
+        onSolve={onSolve}
         onExit={() => setScreen("menu")}
       />
     );
@@ -152,6 +174,17 @@ export default function App() {
 
   if (screen === "vote") {
     return <VoteScreen onExit={() => setScreen("menu")} />;
+  }
+  if (screen === "collection") {
+    return (
+      <Suspense fallback={<main className="app"><p className="progress">Carregant el mapa…</p></main>}>
+        <Collection
+          pool={pool}
+          unlocked={records.unlockedTowns}
+          onExit={() => setScreen("menu")}
+        />
+      </Suspense>
+    );
   }
   if (screen === "records") {
     const { daily, ten, hard, infinite } = records;
@@ -208,6 +241,7 @@ export default function App() {
         <button onClick={() => start("hard")}>🔥 Mode difícil (sense pistes)</button>
         <button onClick={() => start("infinite")}>♾️ Mode infinit</button>
         <button className="secondary" onClick={() => setScreen("records")}>🏆 Rècords</button>
+        <button className="secondary" onClick={() => setScreen("collection")}>🗺️ Col·lecció</button>
         <button className="secondary" onClick={() => setScreen("propose")}>💡 Proposa un poble</button>
         <button className="secondary" onClick={() => setScreen("vote")}>🗳️ Vota propostes</button>
       </div>
