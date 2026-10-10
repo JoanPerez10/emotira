@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import Game from "./components/Game";
 import ProposeForm from "./components/ProposeForm";
 import { puzzles, type Puzzle } from "./data/puzzles";
@@ -11,6 +11,7 @@ import {
   loadRecords,
   recordResult,
   saveRecords,
+  unlockTown,
   normalizeRecords,
 } from "./utils/storage";
 import "./App.css";
@@ -23,7 +24,21 @@ import RankingScreen from "./components/RankingScreen";
 import type { Session } from "./api/types";
 import { MODES, MODE_TITLES as TITLES, scoreOf } from "./modes";
 
-type Screen = "menu" | "records" | "play" | "result" | "propose" | "vote" | "admin" | "account" | "ranking" | "groups";
+// El mapa de municipis pesa ~125 KB: només es descarrega en obrir la Col·lecció
+const Collection = lazy(() => import("./components/Collection"));
+
+type Screen =
+  | "menu"
+  | "records"
+  | "play"
+  | "result"
+  | "propose"
+  | "vote"
+  | "admin"
+  | "collection"
+  | "account"
+  | "ranking"
+  | "groups";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("menu");
@@ -118,6 +133,15 @@ export default function App() {
     setScreen("play");
   };
 
+  // Es desa en el moment d'encertar (no al final de la partida), així no es perd
+  // res si el jugador surt al menú a mig joc.
+  const onSolve = (answer: string) => {
+    const next = unlockTown(records, answer);
+    if (next === records) return;
+    setRecords(next);
+    saveRecords(next);
+  };
+
   const finish = (res: GameResult) => {
     const { records: next, isBest } = recordResult(records, mode, res);
     setRecords(next);
@@ -146,7 +170,7 @@ export default function App() {
   };
 
   const resetRecords = () => {
-    if (!confirm("Vols esborrar tots els rècords?")) return;
+    if (!confirm("Vols esborrar tots els rècords i la col·lecció de pobles descoberts?")) return;
     const e = emptyRecords();
     setRecords(e);
     saveRecords(e);
@@ -162,6 +186,7 @@ export default function App() {
         endless={mode === "infinite"}
         hard={mode === "hard"}
         onFinish={finish}
+        onSolve={onSolve}
         onExit={() => setScreen("menu")}
       />
     );
@@ -211,6 +236,7 @@ export default function App() {
   if (screen === "vote") {
     return <VoteScreen onExit={() => setScreen("menu")} />;
   }
+
   if (screen === "account") {
     return <AccountScreen session={session} onExit={() => setScreen("menu")} />;
   }
@@ -222,6 +248,19 @@ export default function App() {
   if (screen === "groups") {
     return (
       <GroupsScreen session={session} onExit={() => setScreen("menu")} onLogin={() => setScreen("account")} />
+    )
+  }
+
+  if (screen === "collection") {
+    return (
+      <Suspense fallback={<main className="app"><p className="progress">Carregant el mapa…</p></main>}>
+        <Collection
+          pool={pool}
+          unlocked={records.unlockedTowns}
+          onExit={() => setScreen("menu")}
+        />
+      </Suspense>
+
     );
   }
   if (screen === "records") {
@@ -285,6 +324,7 @@ export default function App() {
           {session ? "👤 El meu compte" : "👤 Entrar / Crear compte"}
         </button>
         <button className="secondary" onClick={() => setScreen("records")}>🏆 Rècords</button>
+        <button className="secondary" onClick={() => setScreen("collection")}>🗺️ Col·lecció</button>
         <button className="secondary" onClick={() => setScreen("propose")}>💡 Proposa un poble</button>
         <button className="secondary" onClick={() => setScreen("vote")}>🗳️ Vota propostes</button>
       </div>
