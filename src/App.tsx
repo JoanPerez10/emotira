@@ -13,7 +13,7 @@ import {
   saveRecords,
 } from "./utils/storage";
 import "./App.css";
-import { fetchAcceptedPuzzles } from "./lib/remotePuzzles";
+import { api } from "./api";
 import AdminPanel from "./components/AdminPanel";
 import VoteScreen from "./components/VoteScreen";
 
@@ -37,7 +37,7 @@ export default function App() {
   const [extra, setExtra] = useState<Puzzle[]>([]);
 
   useEffect(() => {
-    fetchAcceptedPuzzles().then(setExtra);
+    api.fetchAcceptedPuzzles().then(setExtra).catch(() => {});
   }, []);
   const pool = useMemo(() => [...puzzles, ...extra], [extra]);
 
