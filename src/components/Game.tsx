@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameResult, PuzzleResult } from "../types";
 import { normalize } from "../utils/normalize";
 import { shuffle } from "../utils/random";
 import type { Puzzle } from "../data/puzzles";
+import LetterInput, { type LetterInputHandle, type Word } from "./LetterInput";
+import Icon, { type IconName } from "./Icon";
 
 type Status = "playing" | "correct" | "revealed";
 
@@ -11,6 +13,7 @@ const pointsFor = (r: PuzzleResult) =>
 
 interface Props {
   title: string;
+  icon: IconName;
   deck: Puzzle[];
   endless?: boolean;
   hard?: boolean;
@@ -25,6 +28,7 @@ const MAX_FAILS = 3;
 
 export default function Game({
   title,
+  icon,
   deck: initialDeck,
   pool,
   endless = false,
@@ -36,11 +40,14 @@ export default function Game({
   const [deck, setDeck] = useState(initialDeck);
   const [index, setIndex] = useState(0);
   const [results, setResults] = useState<PuzzleResult[]>([]);
-  const [guess, setGuess] = useState("");
+  const [typed, setTyped] = useState(false);
   const [status, setStatus] = useState<Status>("playing");
   const [wrong, setWrong] = useState(false);
+  const [shakeKey, setShakeKey] = useState(0);
   const [hints, setHints] = useState(0);
   const [fails, setFails] = useState(0);
+  const nextRef = useRef<HTMLButtonElement>(null);
+  const inputRef = useRef<LetterInputHandle>(null);
 
   const puzzle = deck[index];
   const isLast = !endless && index + 1 >= deck.length;
@@ -56,25 +63,48 @@ export default function Game({
   let run = 0;
   for (let i = results.length - 1; i >= 0 && results[i].status === "correct"; i--) run++;
 
-  const hintLines = useMemo(() => {
-    const letters = puzzle.answer.replace(/[^\p{L}]/gu, "").length;
-    return [
-      `Comarca: ${puzzle.comarca}`,
-      `${letters} lletres`,
-      `Comença per «${puzzle.answer[0]}»`,
-    ].slice(0, hints);
-  }, [puzzle, hints]);
+  // Es treuen accents, espais i apòstrofs: és exactament el que es pot escriure.
+  // Les tecles segueixen el nom principal, una fila per paraula (els guions
+  // també separen). Abans es feien prou tecles per a l'àlies més llarg, i a
+  // «Platja d'Aro» sortien més caselles que lletres (per «Castell-Platja d'Aro»).
+  // Les àlies més curtes («Pineda») es poden continuar escrivint.
+  // Els apòstrofs no s'escriuen però es marquen entre tecles («L’Escala»).
+  const words = useMemo(
+    () =>
+      puzzle.answer
+        .split(/[\s-]+/)
+        .map((w): Word => {
+          let length = 0;
+          const apostrophes: number[] = [];
+          for (const ch of w) {
+            if (/['’]/.test(ch)) apostrophes.push(length);
+            else length += normalize(ch).length;
+          }
+          return { length, apostrophes: apostrophes.filter((p) => p > 0 && p < length) };
+        })
+        .filter((w) => w.length > 0),
+    [puzzle]
+  );
+
+  const hintLines = useMemo(
+    () =>
+      [
+        `És a la comarca del ${puzzle.comarca}`,
+        `Comença per «${puzzle.answer[0].toUpperCase()}»`,
+        `Es forma així: ${puzzle.explanation}`,
+      ].slice(0, hints),
+    [puzzle, hints]
+  );
 
   const settle = (st: "correct" | "revealed", penalty = hard ? fails : hints) => {
     setStatus(st);
     setResults((r) => [...r, { status: st, hints: penalty }]);
   };
 
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (status !== "playing" || !guess.trim()) return;
+  const submit = (text: string) => {
+    if (status !== "playing" || !text.trim()) return;
     const accepted = [puzzle.answer, ...(puzzle.aliases ?? [])].map(normalize);
-    if (accepted.includes(normalize(guess))) {
+    if (accepted.includes(normalize(text))) {
       setWrong(false);
       settle("correct");
       onSolve?.(puzzle.answer);
@@ -83,12 +113,14 @@ export default function Game({
     if (hard) {
       const f = fails + 1;
       setFails(f);
-      setGuess("");
+      setTyped(false);
       if (f >= MAX_FAILS) {
         setWrong(false);
         settle("revealed", f);
         return;
       }
+    } else {
+      setShakeKey((k) => k + 1);
     }
     setWrong(true);
   };
@@ -104,7 +136,7 @@ export default function Game({
     } else {
       setIndex((i) => i + 1);
     }
-    setGuess("");
+    setTyped(false);
     setStatus("playing");
     setWrong(false);
     setHints(0);
@@ -114,65 +146,136 @@ export default function Game({
   const stopEndless = () =>
     results.length === 0 ? onExit() : onFinish(buildResult(results));
 
+  // En resoldre, el focus salta al botó Següent: es pot continuar sense ratolí.
+  useEffect(() => {
+    if (status !== "playing") nextRef.current?.focus();
+  }, [status]);
+
   return (
     <main className="app">
       <div className="topbar">
-        <button className="ghost" onClick={onExit}>← Menú</button>
-        <strong>{title}</strong>
+        <button className="back" onClick={onExit}>← Menú</button>
+        <strong className="topbar-title">
+          <Icon name={icon} size={18} />
+          {title}
+        </strong>
       </div>
 
-      <p className="progress">
-        {endless
-          ? `Ratxa: ${run} · ${score} punts`
-          : `${index + 1} / ${deck.length} · ${score} punts`}
-      </p>
+      {!endless && (
+        <div className="steps" aria-hidden="true">
+          {deck.map((_, i) => (
+            <span
+              key={i}
+              className={
+                "step" +
+                (i < results.length
+                  ? results[i].status === "correct"
+                    ? " step-ok"
+                    : " step-nope"
+                  : "") +
+                (i === index && status === "playing" ? " step-now" : "")
+              }
+            />
+          ))}
+        </div>
+      )}
 
-      <div className="emojis">{puzzle.emojis}</div>
+      <div className="game-status">
+        <span className="progress">
+          {endless ? `Ratxa: ${run} · ${score} punts` : `Poble ${index + 1} de ${deck.length}`}
+        </span>
+        {hard && (
+          <span className="hearts" aria-label={`Intents restants: ${MAX_FAILS - fails}`}>
+            {Array.from({ length: MAX_FAILS }, (_, i) => (
+              <span key={i} className={i < fails ? "heart-lost" : undefined} aria-hidden="true">
+                ❤️
+              </span>
+            ))}
+          </span>
+        )}
+      </div>
+
+      <p className="puzzle-emoji">{puzzle.emojis}</p>
+
       {hintLines.map((h) => (
-        <p key={h} className="hint">💡 {h}</p>
+        <p key={h} className="hint">
+          <Icon name="lightbulb" size={18} />
+          <span>{h}</span>
+        </p>
       ))}
 
       {status === "playing" ? (
-        <form onSubmit={submit}>
-          <input
-            autoFocus
-            value={guess}
-            onChange={(e) => setGuess(e.target.value)}
-            placeholder="Escriu el nom…"
-            className={wrong ? "wrong" : ""}
+        <>
+<LetterInput
+              /* `fails` a la key: en mode difícil, fallar buida les tecles
+                 (react remunta el component i el valor torna a zero). */
+              key={`${puzzle.answer}-${hard ? fails : 0}`}
+              ref={inputRef}
+            words={words}
+            onSubmit={submit}
+            onInput={() => {
+              setTyped(true);
+              setWrong(false);
+            }}
+            shakeKey={shakeKey}
           />
+
+          {wrong && <p className="error" role="alert">Ups! Prova una altra lletra</p>}
+
           <div className="actions">
-            <button type="submit">Provar</button>
+            <button
+              type="button"
+              className={wrong ? "danger" : undefined}
+              onClick={() => inputRef.current?.submit()}
+              disabled={!typed}
+            >
+              Comprovar
+            </button>
             {!hard && (
-              <button type="button" disabled={hints >= 3} onClick={() => setHints((h) => h + 1)}>
-                Pista
+              <button
+                type="button"
+                className="accent"
+                disabled={hints >= 3}
+                onClick={() => setHints((h) => h + 1)}
+              >
+                {hints >= 3 ? "Ja ho saps tot" : `Pista (${hints}/3)`}
               </button>
             )}
-            <button type="button" onClick={() => settle("revealed")}>
+            <button type="button" className="ghost" onClick={() => settle("revealed")}>
               Em rendeixo
             </button>
           </div>
-          {hard && <p className="hint">Intents restants: {MAX_FAILS - fails}</p>}
-          {wrong && <p className="error">Ups, no és això 🙈</p>}
-        </form>
+        </>
       ) : (
-        <div className="result">
+        <div
+          className={`feedback ${status === "correct" ? "feedback-ok" : "feedback-nope"}`}
+          role="status"
+        >
+          <LetterInput
+            words={words}
+            onSubmit={next}
+            reveal={{ text: normalize(puzzle.answer), kind: status === "correct" ? "ok" : "nope" }}
+            label={`La resposta era ${puzzle.answer}`}
+          />
           <h2>
-            {status === "correct" ? "✅ Correcte!" : "😅 Era:"} {puzzle.answer}
+            {status === "correct" ? "Ho has encertat!" : "Aquest era el nom:"}{" "}
+            <span className="answer-echo">{puzzle.answer}</span>
           </h2>
           <p>{puzzle.explanation}</p>
-          <p>📍 {puzzle.comarca}</p>
+          <p className="help">{puzzle.comarca}</p>
           <div className="actions">
-            <button onClick={next}>{isLast ? "Veure resultat" : "Següent"}</button>
+            <button type="button" ref={nextRef} onClick={next}>
+              {isLast ? "Veure el resultat" : "Poble següent"}
+            </button>
             {endless && (
-              <button className="secondary" onClick={stopEndless}>Acabar</button>
+              <button type="button" className="secondary" onClick={stopEndless}>Acabar</button>
             )}
           </div>
         </div>
       )}
 
       {endless && status === "playing" && results.length > 0 && (
-        <p><button className="ghost" onClick={stopEndless}>Acabar partida</button></p>
+        <p><button className="ghost" onClick={stopEndless}>Acabar la partida</button></p>
       )}
     </main>
   );
