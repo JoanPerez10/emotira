@@ -63,7 +63,7 @@ export default function VoteScreen({ onExit }: { onExit: () => void }) {
   return (
     <main className="app">
       <div className="topbar">
-        <button className="ghost" onClick={onExit}>← Menú</button>
+        <button className="back" onClick={onExit}>← Menú</button>
         <strong>🗳️ Vota propostes</strong>
       </div>
       <p>Ajuda a decidir quins trencaclosques entren al joc.</p>

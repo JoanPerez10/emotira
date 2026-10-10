@@ -1,9 +1,9 @@
 import { useState } from "react";
-import EmojiPicker, { type EmojiClickData } from "emoji-picker-react";
 import { COMARQUES } from "../data/comarques";
 import { puzzles } from "../data/puzzles";
 import { normalize } from "../utils/normalize";
 import { api, isMock } from "../api";
+import EmojiPicker from "./EmojiPicker";
 
 const SENT_KEY = "pobles-emoji:proposals-sent";
 const MAX_PER_DAY = 5;
@@ -67,7 +67,8 @@ export default function ProposeForm({ onExit }: { onExit: () => void }) {
     const e = emojis.trim();
     if (!e) return "Afegeix els emojis.";
     if (/\p{L}/u.test(e)) return "El camp d'emojis només pot tenir emojis (sense lletres).";
-    if (!/\p{Extended_Pictographic}|\u20E3/u.test(e)) return "No veig cap emoji.";
+    // Les banderes (🇬🇧) són dos Regional_Indicator, no Extended_Pictographic.
+    if (!/\p{Extended_Pictographic}|\p{Regional_Indicator}|\u20E3/u.test(e)) return "No veig cap emoji.";
     if (countGraphemes(e.replace(/\s/g, "")) > MAX_EMOJIS)
       return `Màxim ${MAX_EMOJIS} emojis.`;
     if (puzzles.some((p) => p.emojis === e.replace(/\s/g, "")))
@@ -131,7 +132,7 @@ export default function ProposeForm({ onExit }: { onExit: () => void }) {
   return (
     <main className="app">
       <div className="topbar">
-        <button className="ghost" onClick={onExit}>← Menú</button>
+        <button className="back" onClick={onExit}>← Menú</button>
         <strong>💡 Proposa un poble</strong>
       </div>
 
@@ -194,14 +195,7 @@ export default function ProposeForm({ onExit }: { onExit: () => void }) {
           </div>
           {showPicker && (
             <div className="emoji-picker-container">
-              <EmojiPicker
-                onEmojiClick={(emojiData: EmojiClickData) => addEmoji(emojiData.emoji)}
-                width="100%"
-                height={320}
-                searchPlaceHolder="Cerca un emoji..."
-                previewConfig={{ showPreview: false }}
-                skinTonesDisabled
-              />
+              <EmojiPicker selected={emojis} onPick={addEmoji} />
             </div>
           )}
         </div>
