@@ -80,7 +80,9 @@
 
 body {
   margin: 0;
-  font-family: "Nunito", "Baloo 2", ui-rounded, "Segoe UI Variable", system-ui,
+  /* "Twemoji Country Flags" només cobreix les lletres de bandera (unicode-range),
+     la resta del text continua amb Nunito. La injecta main.tsx si cal. */
+  font-family: "Twemoji Country Flags", "Nunito", "Baloo 2", ui-rounded, "Segoe UI Variable", system-ui,
     -apple-system, "Segoe UI", Roboto, sans-serif;
   background: var(--bg);
   color: var(--text);
@@ -330,22 +332,31 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
 .letters-native:focus-visible { outline: none; }
 
 .tiles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
   padding: 0.35rem 0.1rem 0.6rem;
+  /* Les tecles s'encongeixen perquè la paraula més llarga (fins a 14 lletres,
+     `--cols` ve de LetterInput) càpiga en una fila. */
+  container-type: inline-size;
+  --tile-gap: 0.3rem;
+  --tile: min(3.1rem, calc((100cqi - 1px - (var(--cols, 8) - 1) * var(--tile-gap)) / var(--cols, 8)));
 }
-/* Els noms llargs es trenen en varies files en comptes de fer scroll horitzontal */
+/* Una fila per paraula. Només una paraula de més de 14 lletres es trenca
+   en varies files (en comptes de fer scroll horitzontal). */
 .tiles-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.3rem;
+  gap: var(--tile-gap);
   justify-content: center;
 }
 
 .tile {
-  flex: 0 0 clamp(2.2rem, 9vw, 3.1rem);
+  flex: 0 0 var(--tile);
   aspect-ratio: 1;
   display: grid;
   place-items: center;
-  font-size: clamp(1.2rem, 5vw, 1.6rem);
+  font-size: calc(var(--tile) * 0.52);
   font-weight: 900;
   text-transform: uppercase;
   color: var(--text);
@@ -357,6 +368,37 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   -webkit-user-select: none;
   transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease;
 }
+
+/* Apòstrof entre tecles (ex.: L’Escala, Platja d’Aro).
+   Segons la guia d'estils (README), usem --orange-ink (paleta de marca sobre fons clar). */
+.tile.apos {
+  margin-left: calc(var(--tile) * 0.4);
+  position: relative;
+}
+.tile.apos::before {
+  content: "’";
+  position: absolute;
+  right: 100%;
+  width: calc(var(--tile) * 0.4 + var(--tile-gap));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 0;
+  height: 60%;
+  font-size: calc(var(--tile) * 0.72);
+  font-weight: 900;
+  color: var(--orange-ink);
+  pointer-events: none;
+  line-height: 1;
+  user-select: none;
+}
+.tile.ok.apos::before {
+  color: var(--green-deep);
+}
+.tile.nope.apos::before {
+  color: var(--gold-ink);
+}
+
 .tile.filled {
   border-color: var(--blue);
   background: var(--blue-wash);
@@ -755,6 +797,15 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
 }
 .map-controls button:hover:not(:disabled) { background: var(--blue-wash); filter: none; }
 .map-controls button:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 #c9c4b6; }
+/* Sense això, `.map-controls button` guanyava a `button:disabled` i no es
+   veia quin botó es pot clicar fins a passar-hi el ratolí. */
+.map-controls button:disabled {
+  background: #ece7dc;
+  color: #b3ab9c;
+  box-shadow: 0 1px 0 #d6d0c3;
+  transform: translateY(2px);
+  cursor: not-allowed;
+}
 
 .map-info {
   display: flex;

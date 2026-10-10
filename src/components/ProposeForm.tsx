@@ -67,7 +67,8 @@ export default function ProposeForm({ onExit }: { onExit: () => void }) {
     const e = emojis.trim();
     if (!e) return "Afegeix els emojis.";
     if (/\p{L}/u.test(e)) return "El camp d'emojis només pot tenir emojis (sense lletres).";
-    if (!/\p{Extended_Pictographic}|\u20E3/u.test(e)) return "No veig cap emoji.";
+    // Les banderes (🇬🇧) són dos Regional_Indicator, no Extended_Pictographic.
+    if (!/\p{Extended_Pictographic}|\p{Regional_Indicator}|\u20E3/u.test(e)) return "No veig cap emoji.";
     if (countGraphemes(e.replace(/\s/g, "")) > MAX_EMOJIS)
       return `Màxim ${MAX_EMOJIS} emojis.`;
     if (puzzles.some((p) => p.emojis === e.replace(/\s/g, "")))

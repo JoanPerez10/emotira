@@ -57,9 +57,17 @@ function reducer(s: State, a: Action): State {
   }
 }
 
-interface Props {
-  /** Nombre de tecles = lletres de la resposta (ja sense accents ni espais). */
+/** Una paraula de la resposta, tal com es mostra en una fila de tecles. */
+export interface Word {
+  /** Lletres que s'escriuen (ja sense accents ni apòstrofs). */
   length: number;
+  /** Posicions on hi ha un apòstrof: «d’Aro» → [1] (després de la D). */
+  apostrophes: number[];
+}
+
+interface Props {
+  /** Cada paraula va en una fila; el total de lletres és el nombre de tecles. */
+  words: Word[];
   /** Reps el text que l'infant ha escrit. */
   onSubmit: (value: string) => void;
   /** S'avisa de qualsevol canvi d'escriptura (per netejar avisos d'error). */
@@ -79,7 +87,7 @@ export interface LetterInputHandle {
 }
 
 export default function LetterInput({
-  length,
+  words,
   onSubmit,
   onInput,
   reveal = null,
@@ -87,6 +95,7 @@ export default function LetterInput({
   label = "Escriu el nom del poble, lletra per lletra",
   ref,
 }: Props) {
+  const length = words.reduce((a, w) => a + w.length, 0);
   const [state, dispatch] = useReducer(reducer, { value: "", caret: 0, length });
   const inputRef = useRef<HTMLInputElement>(null);
   const tileRefs = useRef<(HTMLSpanElement | null)[]>([]);
@@ -154,11 +163,19 @@ export default function LetterInput({
     [locked, value, onSubmit]
   );
 
+  // Índexs globals de les tecles que van just després d'un apòstrof.
+  const aposAt = new Set<number>();
+  words.reduce((start, w) => {
+    for (const p of w.apostrophes) aposAt.add(start + p);
+    return start + w.length;
+  }, 0);
+
   const tiles = Array.from({ length }, (_, i) => {
     const shown = locked ? (reveal.text[i] ?? "") : (value[i] ?? "");
     let cls = "tile";
     if (shown) cls += locked ? (reveal.kind === "ok" ? " ok" : " nope") : " filled";
     if (!locked && i === caret) cls += " active";
+    if (aposAt.has(i)) cls += " apos";
     return (
       <span
         key={i}
@@ -179,10 +196,22 @@ export default function LetterInput({
     );
   });
 
+  // Columnes = paraula més llarga, fins a 14: fins aquí no es trenca mai la fila.
+  // Cada apòstrof ocupa uns 0.4 de tecla (vegeu `.tile.apos`).
+  const cols = Math.min(14, Math.max(1, ...words.map((w) => w.length + 0.4 * w.apostrophes.length)));
+
   return (
     <div className="letters">
-      <div className="tiles" key={shakeKey}>
-        <div className="tiles-row">{tiles}</div>
+      <div className="tiles" key={shakeKey} style={{ ["--cols" as string]: cols }}>
+        {/* Una fila per paraula: «Pineda de Mar» fa tres files. */}
+        {words.map((word, w) => {
+          const start = words.slice(0, w).reduce((a, x) => a + x.length, 0);
+          return (
+            <div className="tiles-row" key={w}>
+              {tiles.slice(start, start + word.length)}
+            </div>
+          );
+        })}
       </div>
 
       {/* Input real però invisible: és el que fa pujar el teclat del mòbil i el

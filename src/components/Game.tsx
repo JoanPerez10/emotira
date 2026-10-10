@@ -3,7 +3,7 @@ import type { GameResult, PuzzleResult } from "../types";
 import { normalize } from "../utils/normalize";
 import { shuffle } from "../utils/random";
 import type { Puzzle } from "../data/puzzles";
-import LetterInput, { type LetterInputHandle } from "./LetterInput";
+import LetterInput, { type LetterInputHandle, type Word } from "./LetterInput";
 import Icon, { type IconName } from "./Icon";
 
 type Status = "playing" | "correct" | "revealed";
@@ -64,13 +64,27 @@ export default function Game({
   for (let i = results.length - 1; i >= 0 && results[i].status === "correct"; i--) run++;
 
   // Es treuen accents, espais i apòstrofs: és exactament el que es pot escriure.
-  // Les tecles han de cobrir la forma més llarga acceptada (algun poble té
-  // àlies més llargues que el nom principal), sinó l'àlies seria impossible
-  // d'escriure. Les tecles de més que sobren es queden buides en resposta.
-  const letterCount = useMemo(() => {
-    const forms = [puzzle.answer, ...(puzzle.aliases ?? [])];
-    return Math.max(...forms.map((f) => normalize(f).length));
-  }, [puzzle]);
+  // Les tecles segueixen el nom principal, una fila per paraula (els guions
+  // també separen). Abans es feien prou tecles per a l'àlies més llarg, i a
+  // «Platja d'Aro» sortien més caselles que lletres (per «Castell-Platja d'Aro»).
+  // Les àlies més curtes («Pineda») es poden continuar escrivint.
+  // Els apòstrofs no s'escriuen però es marquen entre tecles («L’Escala»).
+  const words = useMemo(
+    () =>
+      puzzle.answer
+        .split(/[\s-]+/)
+        .map((w): Word => {
+          let length = 0;
+          const apostrophes: number[] = [];
+          for (const ch of w) {
+            if (/['’]/.test(ch)) apostrophes.push(length);
+            else length += normalize(ch).length;
+          }
+          return { length, apostrophes: apostrophes.filter((p) => p > 0 && p < length) };
+        })
+        .filter((w) => w.length > 0),
+    [puzzle]
+  );
 
   const hintLines = useMemo(
     () =>
@@ -195,9 +209,9 @@ export default function Game({
 <LetterInput
               /* `fails` a la key: en mode difícil, fallar buida les tecles
                  (react remunta el component i el valor torna a zero). */
-              key={`${puzzle.answer}-${letterCount}-${hard ? fails : 0}`}
+              key={`${puzzle.answer}-${hard ? fails : 0}`}
               ref={inputRef}
-            length={letterCount}
+            words={words}
             onSubmit={submit}
             onInput={() => {
               setTyped(true);
@@ -238,7 +252,7 @@ export default function Game({
           role="status"
         >
           <LetterInput
-            length={letterCount}
+            words={words}
             onSubmit={next}
             reveal={{ text: normalize(puzzle.answer), kind: status === "correct" ? "ok" : "nope" }}
             label={`La resposta era ${puzzle.answer}`}
