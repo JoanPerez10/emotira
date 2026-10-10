@@ -11,20 +11,19 @@ import {
   loadRecords,
   recordResult,
   saveRecords,
+  normalizeRecords,
 } from "./utils/storage";
 import "./App.css";
 import { api } from "./api";
 import AdminPanel from "./components/AdminPanel";
 import VoteScreen from "./components/VoteScreen";
+import AccountScreen from "./components/AccountScreen";
+import GroupsScreen from "./components/GroupsScreen";
+import RankingScreen from "./components/RankingScreen";
+import type { Session } from "./api/types";
+import { MODES, MODE_TITLES as TITLES, scoreOf } from "./modes";
 
-type Screen = "menu" | "records" | "play" | "result" | "propose" | "vote" | "admin";
-
-const TITLES: Record<Mode, string> = {
-  daily: "📅 Repte diari",
-  ten: "🔟 Endivina 10",
-  infinite: "♾️ Mode infinit",
-  hard: "🔥 Mode difícil",
-};
+type Screen = "menu" | "records" | "play" | "result" | "propose" | "vote" | "admin" | "account" | "ranking" | "groups";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("menu");
@@ -35,6 +34,8 @@ export default function App() {
   const [isBest, setIsBest] = useState(false);
   const [copied, setCopied] = useState(false);
   const [extra, setExtra] = useState<Puzzle[]>([]);
+  const [session, setSession] = useState<Session | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     api.fetchAcceptedPuzzles().then(setExtra).catch(() => {});
@@ -51,9 +52,61 @@ export default function App() {
     return () => window.removeEventListener("hashchange", check);
   }, []);
 
+  // Sessió
+  useEffect(() => {
+    if (!api.enabled) return;
+    let alive = true;
+    api.auth.getSession().then((s) => {
+      if (alive) setSession(s);
+    });
+    const off = api.auth.onChange((s) => {
+      if (alive) setSession(s);
+    });
+    return () => {
+      alive = false;
+      off();
+    };
+  }, []);
+
+  // Rècords: de la BD si hi ha sessió; del navegador si som convidats
+  const userId = session?.id ?? null;
+  useEffect(() => {
+    if (!userId) {
+      setRecords(loadRecords());
+      return;
+    }
+    let alive = true;
+    setSyncing(true);
+    (async () => {
+      try {
+        const cloud = await api.records.load();
+        if (!alive) return;
+        if (cloud) {
+          setRecords(normalizeRecords(cloud));
+        } else {
+          // Primera vegada: pugem els rècords que ja tenies com a convidat
+          const local = loadRecords();
+          setRecords(local);
+          await api.records.save(local);
+          for (const m of MODES) {
+            if (scoreOf(local, m) > 0) await api.scores.submit(m, scoreOf(local, m));
+          }
+        }
+      } catch {
+        /* ens quedem amb el que hi ha */
+      } finally {
+        if (alive) setSyncing(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [userId]);
+
   const todayResult = records.daily.history[todayKey()];
 
   const start = (m: Mode) => {
+    if (syncing) return;
     setMode(m);
     setDeck(
       m === "daily"
@@ -68,7 +121,12 @@ export default function App() {
   const finish = (res: GameResult) => {
     const { records: next, isBest } = recordResult(records, mode, res);
     setRecords(next);
-    saveRecords(next);
+    if (session) {
+      api.records.save(next).catch(() => {});
+      api.scores.submit(mode, scoreOf(next, mode)).catch(() => {});
+    } else {
+      saveRecords(next);
+    }
     setResult(res);
     setIsBest(isBest);
     setCopied(false);
@@ -153,6 +211,19 @@ export default function App() {
   if (screen === "vote") {
     return <VoteScreen onExit={() => setScreen("menu")} />;
   }
+  if (screen === "account") {
+    return <AccountScreen session={session} onExit={() => setScreen("menu")} />;
+  }
+  if (screen === "ranking") {
+    return (
+      <RankingScreen session={session} onExit={() => setScreen("menu")} onLogin={() => setScreen("account")} />
+    );
+  }
+  if (screen === "groups") {
+    return (
+      <GroupsScreen session={session} onExit={() => setScreen("menu")} onLogin={() => setScreen("account")} />
+    );
+  }
   if (screen === "records") {
     const { daily, ten, hard, infinite } = records;
     return (
@@ -182,7 +253,7 @@ export default function App() {
         </section>
         <div className="actions">
           <button className="secondary" onClick={() => setScreen("menu")}>← Menú</button>
-          <button className="ghost" onClick={resetRecords}>Esborrar</button>
+          {!session && <button className="ghost" onClick={resetRecords}>Esborrar</button>}
         </div>
       </main>
     );
@@ -192,7 +263,8 @@ export default function App() {
     <main className="app">
       <h1>🏘️ Pobles Emoji</h1>
       <p>Endevina el poble o ciutat de Catalunya!</p>
-      <p className="streak">🔥 Ratxa diària: {currentStreak(records)}</p>
+      <p className="streak">{session ? `👤 ${session.username}` : "👤 Jugant com a convidat"} · 🔥 Ratxa diària: {currentStreak(records)}</p>
+      {syncing && <p className="help">Sincronitzant els teus rècords…</p>}
 
       <div className="menu">
         {todayResult ? (
@@ -207,6 +279,11 @@ export default function App() {
         <button onClick={() => start("ten")}>🔟 Endivina 10</button>
         <button onClick={() => start("hard")}>🔥 Mode difícil (sense pistes)</button>
         <button onClick={() => start("infinite")}>♾️ Mode infinit</button>
+        <button className="secondary" onClick={() => setScreen("ranking")}>🏅 Rànquing</button>
+        <button className="secondary" onClick={() => setScreen("groups")}>👥 Grups</button>
+        <button className="secondary" onClick={() => setScreen("account")}>
+          {session ? "👤 El meu compte" : "👤 Entrar / Crear compte"}
+        </button>
         <button className="secondary" onClick={() => setScreen("records")}>🏆 Rècords</button>
         <button className="secondary" onClick={() => setScreen("propose")}>💡 Proposa un poble</button>
         <button className="secondary" onClick={() => setScreen("vote")}>🗳️ Vota propostes</button>

@@ -10,18 +10,20 @@ export const emptyRecords = (): Records => ({
   infinite: { played: 0, bestSolved: 0, bestStreak: 0 },
 });
 
+export function normalizeRecords(p: Partial<Records> | null | undefined): Records {
+  const base = emptyRecords();
+  return {
+    daily: { ...base.daily, ...p?.daily },
+    ten: { ...base.ten, ...p?.ten },
+    hard: { ...base.hard, ...p?.hard },
+    infinite: { ...base.infinite, ...p?.infinite },
+  };
+}
+
 export function loadRecords(): Records {
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return emptyRecords();
-    const p = JSON.parse(raw);
-    const base = emptyRecords();
-    return {
-      daily: { ...base.daily, ...p.daily },
-      ten: { ...base.ten, ...p.ten },
-      hard: { ...base.hard, ...p.hard },
-      infinite: { ...base.infinite, ...p.infinite },
-    };
+    return normalizeRecords(raw ? JSON.parse(raw) : null);
   } catch {
     return emptyRecords();
   }

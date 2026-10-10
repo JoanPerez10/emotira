@@ -1,10 +1,11 @@
+import type { Mode } from "../types";
 import type { Proposal } from "./types";
 
-export interface MockVote {
-  proposal_id: number;
-  voter_id: string;
-  value: 1 | -1;
-}
+export interface MockVote { proposal_id: number; voter_id: string; value: 1 | -1 }
+export interface MockUser { id: string; email: string; username: string; password: string; isAdmin: boolean }
+export interface MockScore { user_id: string; mode: Mode; value: number; updated_at: string }
+export interface MockGroup { id: string; name: string; code: string; owner_id: string }
+export interface MockMember { group_id: string; user_id: string }
 
 export const SEED_PROPOSALS: Proposal[] = [
   { id: 1, emojis: "🥜🌊", answer: "L’Ametlla de Mar", explanation: "Ametlla + de mar (prova)", comarca: null, aliases: [], status: "pending" },
@@ -19,3 +20,41 @@ export const SEED_VOTES: MockVote[] = [
   { proposal_id: 3, voter_id: "seed-2", value: 1 },
   { proposal_id: 3, voter_id: "seed-3", value: -1 },
 ];
+
+const PLAYER_PASSWORD = "dev12345";
+const names = ["marta", "pau", "laia", "jordi", "nuria", "oriol", "anna"];
+
+export const SEED_USERS: MockUser[] = [
+  { id: "u-admin", email: "admin@dev.local", username: "admin", password: "admin", isAdmin: true },
+  ...names.map((n) => ({
+    id: `u-${n}`, email: `${n}@dev.local`, username: n, password: PLAYER_PASSWORD, isAdmin: false,
+  })),
+];
+
+// [usuari, daily, ten, hard, infinite]
+const SCORES: [string, number, number, number, number][] = [
+  ["marta", 12, 27, 21, 18],
+  ["pau", 7, 25, 24, 9],
+  ["laia", 3, 22, 15, 14],
+  ["jordi", 20, 18, 9, 6],
+  ["nuria", 1, 29, 26, 22],
+  ["oriol", 5, 15, 12, 11],
+  ["anna", 9, 20, 18, 8],
+];
+const MODES_ORDER: Mode[] = ["daily", "ten", "hard", "infinite"];
+
+export const SEED_SCORES: MockScore[] = SCORES.flatMap(([n, ...vals], i) =>
+  vals.map((value, j) => ({
+    user_id: `u-${n}`,
+    mode: MODES_ORDER[j],
+    value,
+    updated_at: new Date(Date.UTC(2026, 0, 1, 0, i, j)).toISOString(),
+  }))
+);
+
+export const SEED_GROUPS: MockGroup[] = [
+  { id: "g-1", name: "Colla de prova", code: "PROVA1", owner_id: "u-marta" },
+];
+export const SEED_MEMBERS: MockMember[] = ["marta", "pau", "laia", "nuria"].map((n) => ({
+  group_id: "g-1", user_id: `u-${n}`,
+}));

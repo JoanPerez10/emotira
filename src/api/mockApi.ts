@@ -1,17 +1,28 @@
 import type { Puzzle } from "../data/puzzles";
-import { SEED_PROPOSALS, SEED_VOTES, type MockVote } from "./mockSeed";
-import type { AdminSession, Api, Proposal, Tally } from "./types";
+import { MODES } from "../modes";
+import type { Mode, Records } from "../types";
+import {
+  SEED_GROUPS, SEED_MEMBERS, SEED_PROPOSALS, SEED_SCORES, SEED_USERS, SEED_VOTES,
+  type MockGroup, type MockMember, type MockScore, type MockUser, type MockVote,
+} from "./mockSeed";
+import type { Api, GroupInfo, GroupRankRow, Proposal, Session, Tally } from "./types";
 import { votedStorageKey, voterId } from "./voter";
 
-const DB_KEY = "pobles-emoji:mock-db:v1";
+const DB_KEY = "pobles-emoji:mock-db:v2";
 const SESSION_KEY = "pobles-emoji:mock-session";
-const LATENCY_MS = 250; // simula la xarxa, per veure els estats de "Carregant…"
-const MOCK_ADMIN = { email: "admin@dev.local", password: "admin" };
+const LATENCY_MS = 250; // simula la xarxa
+const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/;
+const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 interface MockDb {
   proposals: Proposal[];
   votes: MockVote[];
   nextId: number;
+  users: MockUser[];
+  records: Record<string, Records>;
+  scores: MockScore[];
+  groups: MockGroup[];
+  members: MockMember[];
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -21,6 +32,11 @@ const seed = (): MockDb => ({
   proposals: structuredClone(SEED_PROPOSALS),
   votes: structuredClone(SEED_VOTES),
   nextId: Math.max(...SEED_PROPOSALS.map((p) => p.id)) + 1,
+  users: structuredClone(SEED_USERS),
+  records: {},
+  scores: structuredClone(SEED_SCORES),
+  groups: structuredClone(SEED_GROUPS),
+  members: structuredClone(SEED_MEMBERS),
 });
 
 const load = (): MockDb => {
@@ -37,7 +53,7 @@ const save = () => {
   try {
     localStorage.setItem(DB_KEY, JSON.stringify(db));
   } catch {
-    /* sense emmagatzematge: les dades duren fins que es recarregui */
+    /* sense emmagatzematge */
   }
 };
 
@@ -54,6 +70,43 @@ export function resetMockDb() {
   }
 }
 
+// ---------- Sessió ----------
+const listeners = new Set<(s: Session | null) => void>();
+
+const toSession = (u: MockUser): Session => ({
+  id: u.id, email: u.email, username: u.username, isAdmin: u.isAdmin,
+});
+
+const currentUser = (): MockUser | null => {
+  try {
+    const id = localStorage.getItem(SESSION_KEY);
+    return db.users.find((u) => u.id === id) ?? null;
+  } catch {
+    return null;
+  }
+};
+
+const setSessionUser = (u: MockUser | null) => {
+  try {
+    if (u) localStorage.setItem(SESSION_KEY, u.id);
+    else localStorage.removeItem(SESSION_KEY);
+  } catch {
+    /* res */
+  }
+  listeners.forEach((cb) => cb(u ? toSession(u) : null));
+};
+
+// Imiten el que farien les polítiques RLS / funcions de Supabase
+const requireUser = (): MockUser => {
+  const u = currentUser();
+  if (!u) throw new Error("Cal iniciar sessió.");
+  return u;
+};
+const requireAdmin = () => {
+  if (!requireUser().isAdmin) throw new Error("No tens permís: cal ser administrador.");
+};
+
+// ---------- Ajudants ----------
 const tallyFor = (ids: number[]) => {
   const t: Record<number, Tally> = {};
   for (const v of db.votes) {
@@ -65,38 +118,42 @@ const tallyFor = (ids: number[]) => {
   return t;
 };
 
-// Sessió simulada
-const listeners = new Set<(s: AdminSession | null) => void>();
+function ranked(mode: Mode, userIds: string[] | null, includeZero: boolean) {
+  const me = currentUser()?.id;
+  const rows = db.users
+    .filter((u) => !userIds || userIds.includes(u.id))
+    .map((u) => {
+      const s = db.scores.find((x) => x.user_id === u.id && x.mode === mode);
+      return { username: u.username, value: s?.value ?? 0, at: s?.updated_at ?? "", isMe: u.id === me };
+    })
+    .filter((r) => includeZero || r.value > 0)
+    .sort((a, b) => b.value - a.value || a.at.localeCompare(b.at) || a.username.localeCompare(b.username));
+  let prev = -1;
+  let rank = 0;
+  return rows.map((r, i) => {
+    if (r.value !== prev) {
+      rank = i + 1;
+      prev = r.value;
+    }
+    return { rank, username: r.username, value: r.value, isMe: r.isMe };
+  });
+}
 
-const storedSession = (): AdminSession | null => {
-  try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    return raw ? (JSON.parse(raw) as AdminSession) : null;
-  } catch {
-    return null;
-  }
-};
+const groupInfo = (g: MockGroup): GroupInfo => ({
+  id: g.id, name: g.name, code: g.code,
+  members: db.members.filter((m) => m.group_id === g.id).length,
+});
 
-const setSession = (s: AdminSession | null) => {
-  try {
-    if (s) localStorage.setItem(SESSION_KEY, JSON.stringify(s));
-    else localStorage.removeItem(SESSION_KEY);
-  } catch {
-    /* res */
-  }
-  listeners.forEach((cb) => cb(s));
-};
-
-// Imita el que farien les polítiques RLS de Supabase
-const requireAdmin = () => {
-  if (!storedSession()) throw new Error("No tens permís: inicia sessió com a admin.");
-};
+const randomCode = () =>
+  Array.from({ length: 6 }, () => CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)]).join("");
 
 export const mockApi: Api = {
   mode: "mock",
   enabled: true,
-  loginHint: `Mode developer: ${MOCK_ADMIN.email} / ${MOCK_ADMIN.password}`,
+  loginHint:
+    "Mode developer · admin: admin@dev.local / admin · jugadors: marta@dev.local / dev12345 (o crea'n un de nou)",
 
+  // ----- Propostes -----
   async submitProposal(p) {
     await delay();
     db.proposals.push({ id: db.nextId++, ...p, aliases: [], status: "pending" });
@@ -121,10 +178,7 @@ export const mockApi: Api = {
   async fetchVotingProposals() {
     await delay();
     const proposals = db.proposals.filter((p) => p.status === "voting");
-    return {
-      proposals: structuredClone(proposals),
-      tallies: tallyFor(proposals.map((p) => p.id)),
-    };
+    return { proposals: structuredClone(proposals), tallies: tallyFor(proposals.map((p) => p.id)) };
   },
 
   async castVote(id, value) {
@@ -138,10 +192,12 @@ export const mockApi: Api = {
     return "ok";
   },
 
+  // ----- Comptes -----
   auth: {
     async getSession() {
       await delay();
-      return storedSession();
+      const u = currentUser();
+      return u ? toSession(u) : null;
     },
     onChange(cb) {
       listeners.add(cb);
@@ -151,17 +207,141 @@ export const mockApi: Api = {
     },
     async signIn(email, password) {
       await delay();
-      if (email.trim() === MOCK_ADMIN.email && password === MOCK_ADMIN.password) {
-        setSession({ email: MOCK_ADMIN.email });
-        return true;
-      }
-      return false;
+      const u = db.users.find(
+        (x) => x.email.toLowerCase() === email.trim().toLowerCase() && x.password === password
+      );
+      if (!u) return false;
+      setSessionUser(u);
+      return true;
+    },
+    async signUp(username, email, password) {
+      await delay();
+      if (!USERNAME_RE.test(username))
+        return { ok: false, error: "El nom d'usuari ha de tenir 3-20 caràcters (lletres, números o _)." };
+      if (db.users.some((u) => u.username.toLowerCase() === username.toLowerCase()))
+        return { ok: false, error: "Aquest nom d'usuari ja està agafat." };
+      if (db.users.some((u) => u.email.toLowerCase() === email.trim().toLowerCase()))
+        return { ok: false, error: "Aquest correu ja està registrat." };
+      if (password.length < 8)
+        return { ok: false, error: "La contrasenya ha de tenir almenys 8 caràcters." };
+      const user: MockUser = {
+        id: `u-${crypto.randomUUID()}`, email: email.trim(), username, password, isAdmin: false,
+      };
+      db.users.push(user);
+      save();
+      setSessionUser(user);
+      return { ok: true, needsConfirmation: false };
     },
     async signOut() {
-      setSession(null);
+      setSessionUser(null);
+    },
+    async usernameAvailable(username) {
+      await delay();
+      return !db.users.some((u) => u.username.toLowerCase() === username.toLowerCase());
+    },
+    async deleteAccount() {
+      await delay();
+      const u = requireUser();
+      db.users = db.users.filter((x) => x.id !== u.id);
+      delete db.records[u.id];
+      db.scores = db.scores.filter((s) => s.user_id !== u.id);
+      db.members = db.members.filter((m) => m.user_id !== u.id);
+      db.groups = db.groups.filter((g) => db.members.some((m) => m.group_id === g.id));
+      save();
+      setSessionUser(null);
     },
   },
 
+  // ----- Rècords i rànquings -----
+  records: {
+    async load() {
+      await delay();
+      const u = requireUser();
+      return db.records[u.id] ? structuredClone(db.records[u.id]) : null;
+    },
+    async save(r) {
+      await delay();
+      const u = requireUser();
+      db.records[u.id] = structuredClone(r);
+      save();
+    },
+  },
+
+  scores: {
+    async submit(mode, value) {
+      await delay();
+      const u = requireUser();
+      const max = mode === "ten" || mode === "hard" ? 30 : 10000;
+      if (!MODES.includes(mode) || value < 0 || value > max) throw new Error("Puntuació no vàlida.");
+      const cur = db.scores.find((s) => s.user_id === u.id && s.mode === mode);
+      if (!cur) {
+        db.scores.push({ user_id: u.id, mode, value, updated_at: new Date().toISOString() });
+      } else if (value > cur.value) {
+        cur.value = value;
+        cur.updated_at = new Date().toISOString();
+      }
+      save();
+    },
+    async leaderboard(mode) {
+      await delay();
+      return ranked(mode, null, false).filter((r, i) => i < 5 || r.isMe);
+    },
+  },
+
+  // ----- Grups -----
+  groups: {
+    async list() {
+      await delay();
+      const u = requireUser();
+      const mine = db.members.filter((m) => m.user_id === u.id).map((m) => m.group_id);
+      return db.groups.filter((g) => mine.includes(g.id)).map(groupInfo);
+    },
+    async create(name) {
+      await delay();
+      const u = requireUser();
+      const n = name.trim();
+      if (n.length < 2 || n.length > 40) throw new Error("El nom del grup ha de tenir entre 2 i 40 caràcters");
+      let code = randomCode();
+      while (db.groups.some((g) => g.code === code)) code = randomCode();
+      const g: MockGroup = { id: `g-${crypto.randomUUID()}`, name: n, code, owner_id: u.id };
+      db.groups.push(g);
+      db.members.push({ group_id: g.id, user_id: u.id });
+      save();
+      return groupInfo(g);
+    },
+    async join(code) {
+      await delay();
+      const u = requireUser();
+      const g = db.groups.find((x) => x.code === code.trim().toUpperCase());
+      if (!g) throw new Error("Codi de grup no vàlid");
+      if (!db.members.some((m) => m.group_id === g.id && m.user_id === u.id)) {
+        db.members.push({ group_id: g.id, user_id: u.id });
+        save();
+      }
+      return groupInfo(g);
+    },
+    async leave(id) {
+      await delay();
+      const u = requireUser();
+      db.members = db.members.filter((m) => !(m.group_id === id && m.user_id === u.id));
+      if (!db.members.some((m) => m.group_id === id)) {
+        db.groups = db.groups.filter((g) => g.id !== id);
+      }
+      save();
+    },
+    async ranking(id) {
+      await delay();
+      const u = requireUser();
+      if (!db.members.some((m) => m.group_id === id && m.user_id === u.id))
+        throw new Error("No ets membre d'aquest grup");
+      const ids = db.members.filter((m) => m.group_id === id).map((m) => m.user_id);
+      return MODES.flatMap((mode) =>
+        ranked(mode, ids, true).map((r): GroupRankRow => ({ mode, ...r }))
+      );
+    },
+  },
+
+  // ----- Admin -----
   admin: {
     async listOpenProposals() {
       await delay();
