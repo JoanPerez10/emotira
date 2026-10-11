@@ -130,6 +130,10 @@ export default function AccountScreen({
               <span><Icon name="reverse" size={16} /> Invers:</span>
               <b>{formatScoreValue("inverse", records.inverse.best)}</b>
             </li>
+            <li>
+              <span><Icon name="music" size={16} /> Música:</span>
+              <b>{formatScoreValue("music", records.music.best)}</b>
+            </li>
           </ul>
 
           <div className="actions">
@@ -165,6 +169,7 @@ export default function AccountScreen({
             🎮 <b>Progrés en aquest dispositiu:</b> {records.unlockedTowns.length} {records.unlockedTowns.length === 1 ? "poble descobert" : "pobles descoberts"}
             {records.timeTrial.best > 0 && ` · Contrarellotge: ${records.timeTrial.best} pobles`}
             {records.inverse.best > 0 && ` · Invers: ${records.inverse.best}/30`}
+            {records.music.best > 0 && ` · Música: ${records.music.best}/30`}
           </p>
           <p className="help">En crear un compte o entrar, es guardaran automàticament i sortiràs als rànquings!</p>
         </div>

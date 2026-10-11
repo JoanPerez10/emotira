@@ -31,17 +31,17 @@ export const SEED_USERS: MockUser[] = [
   })),
 ];
 
-// [usuari, daily, ten, hard, infinite, timeTrial, inverse]
-const SCORES: [string, number, number, number, number, number, number][] = [
-  ["marta", 12, 27, 21, 18, 14, 26],
-  ["pau", 7, 25, 24, 9, 11, 23],
-  ["laia", 3, 22, 15, 14, 8, 20],
-  ["jordi", 20, 18, 9, 6, 6, 17],
-  ["nuria", 1, 29, 26, 22, 16, 28],
-  ["oriol", 5, 15, 12, 11, 10, 15],
-  ["anna", 9, 20, 18, 8, 13, 22],
+// [usuari, daily, ten, hard, infinite, timeTrial, inverse, music]
+const SCORES: [string, number, number, number, number, number, number, number][] = [
+  ["marta", 12, 27, 21, 18, 14, 26, 25],
+  ["pau", 7, 25, 24, 9, 11, 23, 21],
+  ["laia", 3, 22, 15, 14, 8, 20, 18],
+  ["jordi", 20, 18, 9, 6, 6, 17, 15],
+  ["nuria", 1, 29, 26, 22, 16, 28, 27],
+  ["oriol", 5, 15, 12, 11, 10, 15, 12],
+  ["anna", 9, 20, 18, 8, 13, 22, 20],
 ];
-const MODES_ORDER: Mode[] = ["daily", "ten", "hard", "infinite", "timeTrial", "inverse"];
+const MODES_ORDER: Mode[] = ["daily", "ten", "hard", "infinite", "timeTrial", "inverse", "music"];
 
 export const SEED_SCORES: MockScore[] = SCORES.flatMap(([n, ...vals], i) =>
   vals.map((value, j) => ({

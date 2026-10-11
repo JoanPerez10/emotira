@@ -86,15 +86,19 @@ export default function Game({
     [puzzle]
   );
 
-  const hintLines = useMemo(
-    () =>
-      [
-        `És a la comarca del ${puzzle.comarca}`,
-        `Comença per «${puzzle.answer[0].toUpperCase()}»`,
-        `Es forma així: ${puzzle.explanation}`,
-      ].slice(0, hints),
-    [puzzle, hints]
-  );
+  const hintLines = useMemo(() => {
+    const lines: string[] = [];
+    if (puzzle.comarca) {
+      lines.push(
+        title === "Música"
+          ? `Origen: ${puzzle.comarca}`
+          : `És a la comarca del ${puzzle.comarca}`
+      );
+    }
+    lines.push(`Comença per «${puzzle.answer[0].toUpperCase()}»`);
+    lines.push(`Es forma així: ${puzzle.explanation}`);
+    return lines.slice(0, hints);
+  }, [puzzle, hints, title]);
 
   const settle = (st: "correct" | "revealed", penalty = hard ? fails : hints) => {
     setStatus(st);
@@ -182,7 +186,7 @@ export default function Game({
 
       <div className="game-status">
         <span className="progress">
-          {endless ? `Ratxa: ${run} · ${score} punts` : `Poble ${index + 1} de ${deck.length}`}
+          {endless ? `Ratxa: ${run} · ${score} punts` : `${title === "Música" ? "Grup" : "Poble"} ${index + 1} de ${deck.length}`}
         </span>
         {hard && (
           <span className="hearts" aria-label={`Intents restants: ${MAX_FAILS - fails}`}>
@@ -262,10 +266,10 @@ export default function Game({
             <span className="answer-echo">{puzzle.answer}</span>
           </h2>
           <p>{puzzle.explanation}</p>
-          <p className="help">{puzzle.comarca}</p>
+          {puzzle.comarca && <p className="help">{puzzle.comarca}</p>}
           <div className="actions">
             <button type="button" ref={nextRef} onClick={next}>
-              {isLast ? "Veure el resultat" : "Poble següent"}
+              {isLast ? "Veure el resultat" : title === "Música" ? "Grup següent" : "Poble següent"}
             </button>
             {endless && (
               <button type="button" className="secondary" onClick={stopEndless}>Acabar</button>

@@ -9,6 +9,7 @@ export const emptyRecords = (): Records => ({
   hard: { played: 0, best: 0 },
   timeTrial: { played: 0, best: 0 },
   inverse: { played: 0, best: 0 },
+  music: { played: 0, best: 0 },
   infinite: { played: 0, bestSolved: 0, bestStreak: 0 },
   unlockedTowns: [],
 });
@@ -22,6 +23,7 @@ export function normalizeRecords(p: Partial<Records> | null | undefined): Record
     hard: { ...base.hard, ...p?.hard },
     timeTrial: { ...base.timeTrial, ...p?.timeTrial },
     inverse: { ...base.inverse, ...p?.inverse },
+    music: { ...base.music, ...p?.music },
     infinite: { ...base.infinite, ...p?.infinite },
     // Les dades guardades abans de la Col·lecció no tenen aquest camp
     unlockedTowns: Array.isArray(towns)
@@ -91,7 +93,7 @@ export function recordResult(
         .map((x) => (x.status === "revealed" ? "🟥" : x.hints > 0 ? "🟨" : "🟩"))
         .join(""),
     };
-  } else if (mode === "ten" || mode === "hard" || mode === "inverse") {
+  } else if (mode === "ten" || mode === "hard" || mode === "inverse" || mode === "music") {
     const s = r[mode];
     s.played += 1;
     if (res.score > s.best) {

@@ -4,6 +4,7 @@ import InverseGame from "./components/InverseGame";
 import TimeTrial, { TimeTrialRules } from "./components/TimeTrial";
 import ProposeForm from "./components/ProposeForm";
 import { puzzles, type Puzzle } from "./data/puzzles";
+import { musicPuzzles } from "./data/musicPuzzles";
 import type { GameResult, Mode, Records } from "./types";
 import { dailyPuzzles, todayKey } from "./utils/daily";
 import { shuffle } from "./utils/random";
@@ -57,6 +58,7 @@ interface ModeMeta {
 const MODES: ModeMeta[] = [
   { mode: "inverse", icon: "reverse", title: "Invers", sub: "Del poble als emojis", variant: "blue", src: "/assets/invers-guineu.png" },
   { mode: "timeTrial", icon: "timer", title: "Contrarellotge", sub: "2 minuts i bonus de temps", variant: "orange", src: "/assets/contrarellotge-guineu.png" },
+  { mode: "music", icon: "music", title: "Música", sub: "Grups dels Països Catalans", variant: "purple", src: "/assets/musica-guineu.png" },
   { mode: "ten", icon: "target", title: "Endivina 10", sub: "10 pobles d'una tirada", variant: "blue", src: "/assets/endivina-deu-guineu.png" },
   { mode: "hard", icon: "flame", title: "Mode difícil", sub: "Sense pistes i 3 intents", variant: "coral", src: "/assets/dificil-guineu.png" },
   { mode: "infinite", icon: "infinity", title: "Mode infinit", sub: "Fins que et cansis", variant: "purple", src: "/assets/infinit-guineu.png" },
@@ -97,7 +99,7 @@ export default function App() {
   const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
-    api.fetchAcceptedPuzzles().then(setExtra).catch(() => {});
+    api.fetchAcceptedPuzzles().then(setExtra).catch(() => { });
   }, []);
   const pool = useMemo(() => [...puzzles, ...extra], [extra]);
 
@@ -146,7 +148,7 @@ export default function App() {
           saveRecords(norm);
           for (const m of ALL_MODES) {
             const val = scoreOf(norm, m);
-            if (val > 0) api.scores.submit(m, val).catch(() => {});
+            if (val > 0) api.scores.submit(m, val).catch(() => { });
           }
         } else {
           // Primera vegada: pugem els rècords que ja tenies com a convidat
@@ -181,9 +183,11 @@ export default function App() {
     setDeck(
       m === "daily"
         ? dailyPuzzles()
-        : m === "ten" || m === "hard" || m === "inverse"
-        ? shuffle(pool).slice(0, 10)
-        : shuffle(pool)
+        : m === "music"
+          ? shuffle(musicPuzzles).slice(0, 10)
+          : m === "ten" || m === "hard" || m === "inverse"
+            ? shuffle(pool).slice(0, 10)
+            : shuffle(pool)
     );
     setScreen("play");
   };
@@ -191,12 +195,13 @@ export default function App() {
   // Es desa en el moment d'encertar (no al final de la partida), així no es perd
   // res si el jugador surt al menú a mig joc.
   const onSolve = (answer: string) => {
+    if (mode === "music") return;
     const next = unlockTown(records, answer);
     if (next === records) return;
     setRecords(next);
     saveRecords(next);
     if (session) {
-      api.records.save(next).catch(() => {});
+      api.records.save(next).catch(() => { });
     }
   };
 
@@ -209,8 +214,8 @@ export default function App() {
     setRecords(next);
     saveRecords(next);
     if (session) {
-      api.records.save(next).catch(() => {});
-      api.scores.submit(mode, scoreOf(next, mode)).catch(() => {});
+      api.records.save(next).catch(() => { });
+      api.scores.submit(mode, scoreOf(next, mode)).catch(() => { });
     }
     setResult(res);
     setIsBest(isBest);
@@ -246,11 +251,11 @@ export default function App() {
         title={TITLES[mode]}
         icon={MODE_ICONS[mode]}
         deck={deck}
-        pool={pool}
+        pool={mode === "music" ? musicPuzzles : pool}
         endless={mode === "infinite"}
         hard={mode === "hard"}
         onFinish={finish}
-        onSolve={onSolve}
+        onSolve={mode === "music" ? undefined : onSolve}
         onExit={() => setScreen("menu")}
       />
     );
@@ -281,7 +286,7 @@ export default function App() {
             {result.score} <span className="progress">{isTrial ? "pobles" : `/ ${result.max}`}</span>
           </p>
           <p className="progress">
-            {isTrial ? `Temps esgotat! ${result.results.filter((r) => r.reason === "skipped").length} salts · ${result.results.filter((r) => r.reason === "failed").length} pobles fallats` : `Has encertat ${solved} de ${result.results.length} pobles`}
+            {isTrial ? `Temps esgotat! ${result.results.filter((r) => r.reason === "skipped").length} salts · ${result.results.filter((r) => r.reason === "failed").length} pobles fallats` : `Has encertat ${solved} de ${result.results.length} ${mode === "music" ? "grups" : "pobles"}`}
           </p>
           {isBest && (
             <p className="best">
@@ -363,7 +368,7 @@ export default function App() {
     );
   }
   if (screen === "records") {
-    const { daily, ten, hard, infinite, timeTrial, inverse } = records;
+    const { daily, ten, hard, infinite, timeTrial, inverse, music } = records;
     return (
       <main className="app">
         <div className="topbar">
@@ -401,6 +406,11 @@ export default function App() {
           <h3><Icon name="reverse" size={18} /> Invers</h3>
           <p>Millor puntuació: <b>{inverse.best} / 30</b></p>
           <p>Partides: <b>{inverse.played}</b></p>
+        </section>
+        <section className="stats">
+          <h3><Icon name="music" size={18} /> Música</h3>
+          <p>Millor puntuació: <b>{music.best} / 30</b></p>
+          <p>Partides: <b>{music.played}</b></p>
         </section>
         {/* El retorn al menú ja hi és a la barra superior: aquí només
             l'acció destructiva, que no es pot posar al costat de l'ull. */}
@@ -498,8 +508,8 @@ export default function App() {
           ))}
           <button className="mode-card v-blue" onClick={() => setScreen("collection")}>
             <span className={"mode-icon mode-icon-image"}>
-                <img src="/assets/colleccio-guineu.png" alt="" width={1254} height={1254} draggable={false} />
-              </span>
+              <img src="/assets/colleccio-guineu.png" alt="" width={1254} height={1254} draggable={false} />
+            </span>
             <span className="mode-title">Col·lecció</span>
             <span className="mode-sub">El mapa de pobles</span>
           </button>
