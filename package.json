@@ -1,17 +1,19 @@
 {
-  "name": "pobles-emoji",
+  "name": "emotira",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:mock": "vite --mode mock",
     "build": "tsc -b && vite build",
+    "build:map": "node scripts/build-map.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.3",
-    "emoji-picker-react": "^4.22.3",
+    "country-flag-emoji-polyfill": "^0.1.10",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },

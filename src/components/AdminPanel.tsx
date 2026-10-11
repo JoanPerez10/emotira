@@ -1,26 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
-import type { Session } from "@supabase/supabase-js";
+import { api } from "../api";
+import type { Decision, Proposal, Session, Tally } from "../api/types";
 import { COMARQUES } from "../data/comarques";
-import { supabase } from "../lib/supabase";
-
-interface Row {
-  id: number;
-  emojis: string;
-  answer: string;
-  explanation: string;
-  comarca: string | null;
-  aliases: string[];
-  status: "pending" | "voting";
-}
-type Tally = { up: number; down: number };
-type Decision = "voting" | "accepted" | "rejected";
 
 function Card({
   row,
   tally,
   onDecide,
 }: {
-  row: Row;
+  row: Proposal;
   tally?: Tally;
   onDecide: (id: number, d: Decision, comarca: string, aliases: string[]) => Promise<void>;
 }) {
@@ -59,7 +47,7 @@ function Card({
 
       <label htmlFor={`a-${row.id}`}>Àlies acceptats (separats per comes)</label>
       <input id={`a-${row.id}`} value={aliases} onChange={(e) => setAliases(e.target.value)}
-        placeholder="Escala, L'Escala" />
+        placeholder="Escala, L’Escala" />
 
       <div className="actions">
         <button disabled={busy || !comarca} onClick={() => decide("accepted")}>✅ Acceptar</button>
@@ -81,87 +69,81 @@ export default function AdminPanel({ onExit }: { onExit: () => void }) {
   const [ready, setReady] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rows, setRows] = useState<Row[]>([]);
+  const [rows, setRows] = useState<Proposal[]>([]);
   const [tallies, setTallies] = useState<Record<number, Tally>>({});
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const sb = supabase;
-    if (!sb) return;
-    sb.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setReady(true);
+    if (!api.enabled) return;
+    let alive = true;
+    api.auth.getSession().then((s) => {
+      if (alive) {
+        setSession(s);
+        setReady(true);
+      }
     });
-    const { data: sub } = sb.auth.onAuthStateChange((_e, s) => setSession(s));
-    return () => sub.subscription.unsubscribe();
+    const off = api.auth.onChange(setSession);
+    return () => {
+      alive = false;
+      off();
+    };
   }, []);
 
   const load = useCallback(async () => {
-    const sb = supabase;
-    if (!sb) return;
-    const { data, error } = await sb
-      .from("proposals")
-      .select("id,emojis,answer,explanation,comarca,aliases,status")
-      .in("status", ["pending", "voting"])
-      .order("id");
-    if (error) {
-      setError(error.message);
-      return;
+    try {
+      const { rows, tallies } = await api.admin.listOpenProposals();
+      setRows(rows);
+      setTallies(tallies);
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error desconegut");
     }
-    const list = (data ?? []) as Row[];
-    setRows(list);
-    const votingIds = list.filter((r) => r.status === "voting").map((r) => r.id);
-    const t: Record<number, Tally> = {};
-    if (votingIds.length) {
-      const { data: votes } = await sb
-        .from("votes")
-        .select("proposal_id,value")
-        .in("proposal_id", votingIds);
-      for (const v of votes ?? []) {
-        const x = (t[v.proposal_id] ??= { up: 0, down: 0 });
-        if (v.value > 0) x.up++;
-        else x.down++;
-      }
-    }
-    setTallies(t);
   }, []);
 
   useEffect(() => {
-    if (session) load();
-  }, [session, load]);
+    if (!session) return;
+    let alive = true;
+    api.admin
+      .listOpenProposals()
+      .then(({ rows: r, tallies: t }) => {
+        if (alive) {
+          setRows(r);
+          setTallies(t);
+          setError(null);
+        }
+      })
+      .catch((e) => {
+        if (alive) setError(e instanceof Error ? e.message : "Error desconegut");
+      });
+    return () => {
+      alive = false;
+    };
+  }, [session]);
 
   const login = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase!.auth.signInWithPassword({ email, password });
-    setError(error ? "Correu o contrasenya incorrectes." : null);
+    const ok = await api.auth.signIn(email, password);
+    setError(ok ? null : "Correu o contrasenya incorrectes.");
   };
 
   const decide = async (id: number, status: Decision, comarca: string, aliases: string[]) => {
-    const sb = supabase;
-    if (!sb) return;
-    const { data, error } = await sb
-      .from("proposals")
-      .update({ status, comarca: comarca || null, aliases })
-      .eq("id", id)
-      .select("id");
-    if (error) return setError(error.message);
-    if (!data?.length) {
-      return setError(
-        "No s'ha pogut actualitzar: revisa que el teu usuari sigui l'administrador a les polítiques de Supabase."
-      );
+    try {
+      await api.admin.decide(id, status, comarca, aliases);
+      setError(null);
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error desconegut");
     }
-    setError(null);
-    load();
   };
 
   const header = (
     <div className="topbar">
-      <button className="ghost" onClick={onExit}>← Menú</button>
+      <button className="back" onClick={onExit}>← Menú</button>
       <strong>🛠️ Admin</strong>
     </div>
   );
 
-  if (!supabase) {
+  if (!api.enabled) {
     return (
       <main className="app">
         {header}
@@ -175,6 +157,7 @@ export default function AdminPanel({ onExit }: { onExit: () => void }) {
     return (
       <main className="app">
         {header}
+        {api.loginHint && <p className="help">🧪 {api.loginHint}</p>}
         <form onSubmit={login}>
           <div className="field">
             <label htmlFor="adm-email">Correu</label>
@@ -193,12 +176,22 @@ export default function AdminPanel({ onExit }: { onExit: () => void }) {
     );
   }
 
+  if (!session.isAdmin) {
+    return (
+      <main className="app">
+        {header}
+        <p className="error">Aquest usuari ({session.username}) no és administrador.</p>
+        <button className="ghost" onClick={() => api.auth.signOut()}>Sortir</button>
+      </main>
+    );
+  }
+
   return (
     <main className="app">
       {header}
       <div className="actions">
         <button className="ghost" onClick={load}>↻ Actualitzar</button>
-        <button className="ghost" onClick={() => supabase!.auth.signOut()}>Sortir</button>
+        <button className="ghost" onClick={() => api.auth.signOut()}>Sortir</button>
       </div>
       {error && <p className="error" role="alert">{error}</p>}
       {rows.length === 0 && <p>No hi ha propostes pendents. 🎉</p>}

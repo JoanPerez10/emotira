@@ -1,8 +1,11 @@
-export type Mode = "daily" | "ten" | "hard" | "infinite";
+export type Mode = "daily" | "ten" | "hard" | "infinite" | "timeTrial" | "inverse";
 
 export interface PuzzleResult {
   status: "correct" | "revealed";
   hints: number;
+  answer?: string;
+  explanation?: string;
+  reason?: "skipped" | "failed";
 }
 
 export interface GameResult {
@@ -21,5 +24,9 @@ export interface Records {
   };
   ten: { played: number; best: number };
   hard: { played: number; best: number };
+  timeTrial: { played: number; best: number };
+  inverse: { played: number; best: number };
   infinite: { played: number; bestSolved: number; bestStreak: number };
+  /** Respostes (`puzzle.answer`) de tots els pobles encertats, en qualsevol mode. Sense duplicats. */
+  unlockedTowns: string[];
 }

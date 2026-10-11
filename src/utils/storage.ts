@@ -1,27 +1,39 @@
 import type { GameResult, Mode, PuzzleResult, Records } from "../types";
 import { todayKey, yesterdayKey } from "./daily";
 
-const KEY = "pobles-emoji:records:v1";
+const KEY = "emotira:records:v1";
 
 export const emptyRecords = (): Records => ({
   daily: { played: 0, streak: 0, bestStreak: 0, lastDate: null, history: {} },
   ten: { played: 0, best: 0 },
   hard: { played: 0, best: 0 },
+  timeTrial: { played: 0, best: 0 },
+  inverse: { played: 0, best: 0 },
   infinite: { played: 0, bestSolved: 0, bestStreak: 0 },
+  unlockedTowns: [],
 });
+
+export function normalizeRecords(p: Partial<Records> | null | undefined): Records {
+  const base = emptyRecords();
+  const towns = p?.unlockedTowns;
+  return {
+    daily: { ...base.daily, ...p?.daily },
+    ten: { ...base.ten, ...p?.ten },
+    hard: { ...base.hard, ...p?.hard },
+    timeTrial: { ...base.timeTrial, ...p?.timeTrial },
+    inverse: { ...base.inverse, ...p?.inverse },
+    infinite: { ...base.infinite, ...p?.infinite },
+    // Les dades guardades abans de la Col·lecció no tenen aquest camp
+    unlockedTowns: Array.isArray(towns)
+      ? [...new Set<string>(towns.filter((t): t is string => typeof t === "string"))]
+      : [],
+  };
+}
 
 export function loadRecords(): Records {
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return emptyRecords();
-    const p = JSON.parse(raw);
-    const base = emptyRecords();
-    return {
-      daily: { ...base.daily, ...p.daily },
-      ten: { ...base.ten, ...p.ten },
-      hard: { ...base.hard, ...p.hard },
-      infinite: { ...base.infinite, ...p.infinite },
-    };
+    return normalizeRecords(raw ? JSON.parse(raw) : null);
   } catch {
     return emptyRecords();
   }
@@ -33,6 +45,12 @@ export function saveRecords(r: Records) {
   } catch {
     /* sense emmagatzematge: el joc segueix funcionant */
   }
+}
+
+// Afegeix un poble a la col·lecció global; si ja hi era, retorna el mateix objecte
+export function unlockTown(prev: Records, answer: string): Records {
+  if (prev.unlockedTowns.includes(answer)) return prev;
+  return { ...prev, unlockedTowns: [...prev.unlockedTowns, answer] };
 }
 
 // La ratxa només compta si ahir o avui s'ha jugat el diari
@@ -73,11 +91,17 @@ export function recordResult(
         .map((x) => (x.status === "revealed" ? "🟥" : x.hints > 0 ? "🟨" : "🟩"))
         .join(""),
     };
-  } else if (mode === "ten" || mode === "hard") {
+  } else if (mode === "ten" || mode === "hard" || mode === "inverse") {
     const s = r[mode];
     s.played += 1;
     if (res.score > s.best) {
       s.best = res.score;
+      isBest = true;
+    }
+  } else if (mode === "timeTrial") {
+    r.timeTrial.played += 1;
+    if (res.score > r.timeTrial.best) {
+      r.timeTrial.best = res.score;
       isBest = true;
     }
   } else {
