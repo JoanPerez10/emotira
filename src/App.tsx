@@ -57,13 +57,14 @@ interface ModeMeta {
   sub: string;
   /** Paleta de la targeta: fons suau, icona i vora en to de marca. */
   variant: "blue" | "orange" | "coral" | "purple";
+  src?: string;
 }
 
 const MODES: ModeMeta[] = [
-  { mode: "timeTrial", icon: "timer", title: "Contrarellotge", sub: "2 minuts i bonus de temps", variant: "orange" },
-  { mode: "ten", icon: "target", title: "Endivina 10", sub: "10 pobles d'una tirada", variant: "blue" },
-  { mode: "hard", icon: "flame", title: "Mode difícil", sub: "Sense pistes i 3 intents", variant: "coral" },
-  { mode: "infinite", icon: "infinity", title: "Mode infinit", sub: "Fins que et cansis", variant: "purple" },
+  { mode: "timeTrial", icon: "timer", title: "Contrarellotge", sub: "2 minuts i bonus de temps", variant: "orange", src: "/assets/contrarellotge-guineu.png" },
+  { mode: "ten", icon: "target", title: "Endivina 10", sub: "10 pobles d'una tirada", variant: "blue", src: "/assets/endivina-deu-guineu.png" },
+  { mode: "hard", icon: "flame", title: "Mode difícil", sub: "Sense pistes i 3 intents", variant: "coral", src: "/assets/dificil-guineu.png" },
+  { mode: "infinite", icon: "infinity", title: "Mode infinit", sub: "Fins que et cansis", variant: "purple", src: "/assets/infinit-guineu.png" },
 ];
 
 /** Converteix una puntuació en estrelles (0-3), com a Duolingo. */
@@ -355,15 +356,17 @@ export default function App() {
             </div>
             <p className="daily-squares">{todayResult.results}</p>
             <button type="button" className="share-btn" onClick={share}>
-              <Icon name={copied ? "check" : "share"} size={18} />
+              <span className={"mode-icon mode-icon-image"}>
+                <img src="/assets/repte-diari-guineu.png" alt="" width={1254} height={1254} draggable={false} />
+              </span>
               {copied ? "Copiat" : "Compartir resultat"}
             </button>
           </div>
         ) : (
           <button className="daily-card" onClick={() => start("daily")}>
             <div className="daily-head">
-              <span className="daily-icon">
-                <Icon name="calendar" size={22} />
+              <span className={"mode-icon mode-icon-image daily-icon"}>
+                <img src="/assets/repte-diari-guineu.png" alt="" width={1254} height={1254} draggable={false} />
               </span>
               <span className="daily-title">Repte diari</span>
               <span className="daily-badge">Avui</span>
@@ -380,11 +383,11 @@ export default function App() {
 
         {/* ── La resta, en graella de dues columnes ── */}
         <div className="grid">
-          {MODES.map(({ mode: m, icon, title, sub, variant }) => (
+          {MODES.map(({ mode: m, icon, title, sub, variant, src }) => (
             <button key={m} className={`mode-card v-${variant}`} onClick={() => start(m)}>
-              <span className={`mode-icon${m === "timeTrial" ? " mode-icon-image" : ""}`}>
-                {m === "timeTrial"
-                  ? <img src="/assets/contrarellotge-guineu.png" alt="" width={1254} height={1254} draggable={false} />
+              <span className={`mode-icon${src ? " mode-icon-image" : ""}`}>
+                {src
+                  ? <img src={src} alt="" width={1254} height={1254} draggable={false} />
                   : <Icon name={icon} size={21} />}
               </span>
               <span className="mode-title">{title}</span>
@@ -392,9 +395,9 @@ export default function App() {
             </button>
           ))}
           <button className="mode-card v-blue" onClick={() => setScreen("collection")}>
-            <span className="mode-icon">
-              <Icon name="map" size={21} />
-            </span>
+            <span className={"mode-icon mode-icon-image"}>
+                <img src="/assets/colleccio-guineu.png" alt="" width={1254} height={1254} draggable={false} />
+              </span>
             <span className="mode-title">Col·lecció</span>
             <span className="mode-sub">El mapa de pobles</span>
           </button>
