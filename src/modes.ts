@@ -43,6 +43,7 @@ export const MODE_IMAGES: Record<Mode, string> = {
   infinite: "/assets/infinit-guineu.png",
   timeTrial: "/assets/contrarellotge-guineu.png",
   inverse: "/assets/invers-guineu.png",
+  music: "/assets/musica-guineu.png",
 };
 
 export const scoreOf = (r: Records, m: Mode): number =>
