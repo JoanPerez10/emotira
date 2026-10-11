@@ -1,85 +1,26 @@
 # Emotira
 
-Endevina què és amb només emojis. Joc de preguntes tipus Wordle fet amb React,
-TypeScript i Vite. La mascota és la Guineu.
+Joc de pobles amb emojis, fet amb React, TypeScript i Vite.
 
-## Marca
-
-- **Nom:** Emotira
-- **Mascota:** Guineu (`public/assets/main_menu_guini.png`, amb fons transparent)
-- **Logo:** `public/assets/logo.png` (app mòbil) · `public/favicon.png` (web, 256 px)
-- **Contrarellotge:** `public/assets/contrarellotge-guineu.png` (menú, normes i resultat)
-
-### Paleta
-
-Totes les variables estan definides a `:root` (`src/App.css`). El color viu
-decora; els tons `-deep`/`-ink` porten el text per mantenir contrast AA.
-
-| Token | Color | Ús |
-| --- | --- | --- |
-| `--blue-deep` | `#1857c7` | acció principal, botons (6.51:1 amb blanc) |
-| `--blue` | `#276cdc` | decoració, icones |
-| `--blue-mid` | `#1a5ece` | hover |
-| `--blue-ink` | `#14346e` | text blau sobre fons clar |
-| `--blue-wash` | `#e9f0fb` | superfícies toves |
-| `--orange` | `#f96b25` | accent de marca, gradient diari |
-| `--orange-deep` | `#b84f1b` | botó taronja (5.03:1 amb blanc) |
-| `--orange-ink` | `#8f3d14` | text sobre fons clar |
-| `--orange-wash` | `#fdeadd` | superfícies toves |
-| `--gold` | `--gold-ink` | `#fed54a` / `#4a3300` — recompenses, ratxa, guinyó |
-| `--peach` | `#f7c678` | to càlid de support |
-| `--green` (família) | — | **semàntic**: encertat i pobles descoberts |
-
-El verd es reserva per als estats que signifiquen "encertat" (tecles verdes,
-passos del progrés, municipis desbloquejats al mapa). La resta de la interfície
-usa la paleta de marca blau/taronja.
-
-## Comandes
+## Desenvolupament
 
 ```bash
 npm install
-npm run dev        # servidor de desenvolupament
-npm run dev:mock   # amb dades simulades, sense Supabase
-npm run build      # compila TypeScript + bundle de producció
-npm run preview    # serveix el build
-npm run lint       # ESLint
-npm run build:map  # regenera les dades del mapa
+npm run dev:mock   # dades simulades, sense Supabase
+npm run dev        # configuració habitual
+npm run build      # compilació de producció
+npm run lint       # revisió del codi
+npm run preview    # previsualització del build
+npm run build:map  # regeneració del mapa
 ```
 
-## Estructura
+## Codi
 
-- `src/App.tsx` — navegació entre pantalles (menú, partida, resultat, col·lecció…)
-- `src/components/Game.tsx` — la partida: lletres, pistes, punts
-- `src/components/LetterInput.tsx` — input de lletres estil Wordle (tecles + input invisible)
-- `src/components/Icon.tsx` — icones SVG de traç
-- `src/components/CatalunyaMap.tsx` — mapa de la col·lecció
-- `src/data/puzzles.ts` — les pistes (emojis → nom del poble)
-- `src/utils/storage.ts` — rècords, ratxa i col·lecció (localStorage)
-- `src/api/` — Supabase (amb un `mockApi` per al mode mock)
+- `src/App.tsx`: navegació i modes de joc.
+- `src/components/`: interfície del joc.
+- `src/data/puzzles.ts`: pobles, emojis i explicacions.
+- `src/utils/`: respostes, puntuació i persistència local.
+- `src/api/`: implementacions mock i Supabase.
+- `src/App.css`: estils i colors de marca.
 
-## Contrarellotge
-
-Des del menú, entra al mode, llegeix les normes i prem **Jugar** per iniciar el
-rellotge. Tens 120 segons i 3 intents per poble. Cada encert suma
-1 punt i compta per a la col·lecció. Saltar resta 2 segons i envia el poble al
-final de la cua; el tercer error revela el nom i avança sense restar temps.
-Les respostes incompletes no consumeixen intents, i s'accepten els àlies.
-Una resposta incorrecta buida les lletres. Després del primer error apareix
-la comarca com a pista; després del segon també es mostra la primera lletra.
-
-Cada 5 encerts seguits guanyes 5 segons, fins a 60 segons extra (3 minuts
-acumulats). Saltar o esgotar els intents reinicia el bonus; els dos primers
-errors no el trenquen. El rellotge continua durant les transicions i en segon
-pla. Al final es mostra només el resultat i els botons «Tornar a jugar» i
-«Menú», amb un rècord propi compatible amb el progrés desat abans d'afegir
-aquest mode.
-
-La lògica és a `src/utils/timeTrial.ts`; la interfície i les normes són a
-`src/components/TimeTrial.tsx`. Consulta `AGENTS.md` per a la guia dels agents.
-
-## Pistes
-
-A `src/data/puzzles.ts` cada poble té `emojis`, `answer`, `aliases` (formes
-alternatives acceptades), `comarca` i `explanation` (com es forma el nom).
-El joc treu accents, espais i apòstrofs: `normalize()` és el que accepta el
-teclat i el que es comprova en resoldre.
+Consulta [AGENTS.md](AGENTS.md) per a les convencions del projecte.
