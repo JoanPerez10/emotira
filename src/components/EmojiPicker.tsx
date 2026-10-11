@@ -497,7 +497,4 @@ function IconSearch() {
       <path d="m16.5 16.5 4 4" />
     </svg>
   );
-}
-
-/** Grafemes ja seleccionats: el pare l'ha de poder recarregar. */
-export const toGraphemes = graphemes;
+}

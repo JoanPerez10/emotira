@@ -17,14 +17,11 @@ export default function VoteScreen({ onExit }: { onExit: () => void }) {
   const [items, setItems] = useState<Proposal[]>([]);
   const [tallies, setTallies] = useState<Record<number, Tally>>({});
   const [voted, setVoted] = useState<Record<number, 1 | -1>>(loadVoted);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(api.enabled);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!api.enabled) {
-      setLoading(false);
-      return;
-    }
+    if (!api.enabled) return;
     api
       .fetchVotingProposals()
       .then(({ proposals, tallies }) => {
