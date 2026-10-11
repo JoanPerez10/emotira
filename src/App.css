@@ -657,8 +657,107 @@ button.chip:active:not(:disabled) {
   padding: 1.25rem;
   box-shadow: var(--shadow-md);
 }
-.medal { font-size: 3.4rem; line-height: 1; display: block; margin-bottom: 0.25rem; }
+/* Resultat, a l'estil Duolingo: guineu gran que trepitja la vora, titular
+   potent i les xifres en tres caixes. El `padding-top` no és un número solt:
+   deriva de `--fox-w`, que és l'amplada de la imatge (quadrada, altura igual). */
+.result .score-card {
+  --fox-w: min(168px, 50vw);
+  --fox-out: 0.6rem;
+  position: relative;
+  padding: calc(var(--fox-w) - var(--fox-out) + 0.5rem) 1.1rem 1.4rem;
+}
+/* Paisatge de fons. Va darrere de tot i acaba a l'alçada de la guineu, amb
+   els mateixos cantonats arrodonits que la targeta. */
+.result .result-scene {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--fox-w) - var(--fox-out));
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  background: url("/assets/result-scene.svg") center bottom / cover no-repeat;
+  pointer-events: none;
+  z-index: 0;
+}
+/* Les guineu s'han retallat amb aire transparent al voltant, de manera que
+   `--fox-out` arriba només al paper, mai a la silueta: cap vora les talla. */
+.result .result-fox {
+  position: absolute;
+  top: calc(var(--fox-out) * -1);
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: var(--fox-w);
+  height: auto;
+  pointer-events: none;
+  filter: drop-shadow(0 8px 12px rgba(20, 52, 110, 0.2));
+  animation: riseIn 0.3s ease;
+  z-index: 2;
+}
+/* El text i les xifres han de pujar per damunt del paisatge. */
+.result .score-card h1,
+.result .score-card p,
+.result .score-card ul {
+  position: relative;
+  z-index: 1;
+}
+.result .score-card h1 {
+  font-size: clamp(1.9rem, 8vw, 2.7rem);
+  margin-bottom: 0.1rem;
+}
+.result.is-win .score-card h1 { color: var(--green-ink); }
+.result-mode {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin: 0 0 0.3rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+/* Retrat del mode: mateixa mida que la icona que substitueix, però es veu */
+.result-mode img {
+  width: 1.7rem;
+  height: 1.7rem;
+  object-fit: contain;
+}
 .stars { font-size: 1.6rem; letter-spacing: 0.15rem; }
+.result .stars { font-size: 1.9rem; margin: 0.1rem 0 0.9rem; }
+/* Les xifres, com les xapas d'XP de Duolingo. En flex perquè la fila s'adapti
+   sola al nombre de dades: dues a la majoria de modes, tres al contrarellotge. */
+.result-stats {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.result-stats li {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0.6rem 0.25rem;
+  border-radius: var(--r-md);
+  background: var(--bg-soft);
+  text-align: center;
+}
+.result-stats b {
+  display: block;
+  font-size: 1.3rem;
+  font-weight: 900;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.result-stats span {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.result-note { margin: 0.75rem 0 0; }
+.result .best { justify-content: center; margin: 0.85rem 0 0; }
 .emojis { font-size: 4.5rem; margin: 1.25rem 0; letter-spacing: 0.15rem; line-height: 1.2; }
 .emojis.small { font-size: 2rem; margin: 0.5rem 0; }
 
@@ -1154,6 +1253,50 @@ button.chip:active:not(:disabled) {
   flex-wrap: wrap;
 }
 
+.tabs--segmented {
+  display: inline-flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 1rem auto;
+  padding: 0.25rem;
+  background: var(--bg-soft);
+  border: 2px solid var(--line);
+  border-radius: var(--r-md);
+}
+
+.tabs--segmented button {
+  --focus-ring: var(--focus);
+  background: transparent;
+  color: var(--muted);
+  min-height: 40px;
+  padding: 0.45rem 1.1rem;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.tabs--segmented button:hover:not(:disabled) {
+  background: rgba(31, 41, 51, 0.07);
+  filter: none;
+}
+
+.tabs--segmented button:active:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+}
+
+.tabs--segmented button[aria-selected="true"] {
+  background: var(--surface);
+  color: var(--blue-ink);
+  font-weight: 800;
+  box-shadow: var(--shadow-sm);
+}
+
+.tabs--segmented button[aria-selected="true"]:hover:not(:disabled) {
+  background: var(--surface);
+  filter: none;
+}
+
 .ranking {
   list-style: none;
   padding: 0;
@@ -1299,7 +1442,6 @@ button.chip:active:not(:disabled) {
 .trial-rules { padding: 1.5rem; }
 .trial-fox { display: block; height: auto; object-fit: contain; margin: 0 auto 1rem; }
 .trial-fox-rules { width: min(160px, 45%); }
-.trial-fox-result { width: min(100px, 30%); margin-bottom: 0.5rem; }
 .trial-rules ul { padding-left: 1.25rem; text-align: left; line-height: 1.6; }
 .trial-rules li + li { margin-top: 0.65rem; }
 @media (max-width: 560px) {

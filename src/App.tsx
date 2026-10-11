@@ -8,6 +8,7 @@ import { musicPuzzles } from "./data/musicPuzzles";
 import type { GameResult, Mode, Records } from "./types";
 import { dailyPuzzles, todayKey } from "./utils/daily";
 import { shuffle } from "./utils/random";
+import { TRIAL_WIN_AT } from "./utils/timeTrial";
 import {
   currentStreak,
   emptyRecords,
@@ -25,7 +26,7 @@ import AccountScreen from "./components/AccountScreen";
 import GroupsScreen from "./components/GroupsScreen";
 import RankingScreen from "./components/RankingScreen";
 import type { Session } from "./api/types";
-import { MODES as ALL_MODES, MODE_TITLES as TITLES, MODE_ICONS, scoreOf } from "./modes";
+import { MODES as ALL_MODES, MODE_TITLES as TITLES, MODE_ICONS, MODE_IMAGES, scoreOf } from "./modes";
 import Icon, { type IconName } from "./components/Icon";
 
 // El mapa de municipis pesa ~125 KB: només es descarrega en obrir la Col·lecció
@@ -69,9 +70,6 @@ const starsFor = (score: number, max: number) => {
   const pct = max > 0 ? score / max : 0;
   return pct >= 0.9 ? 3 : pct >= 0.6 ? 2 : pct >= 0.3 ? 1 : 0;
 };
-
-const medalFor = (stars: number) =>
-  stars >= 3 ? "🏆" : stars === 2 ? "🥈" : stars === 1 ? "🥉" : "🌱";
 
 /**
  * Primer emoji d'una pista, sencer. Cal segmentar per grafemes: hi ha
@@ -270,24 +268,60 @@ export default function App() {
     const stars = starsFor(result.score, result.max);
     const isDaily = mode === "daily";
     const isTrial = mode === "timeTrial";
+    const skipped = result.results.filter((r) => r.reason === "skipped").length;
+    const failed = result.results.filter((r) => r.reason === "failed").length;
+    // La guineu reactiona: emoció. Les estrelles: precisió. Abans hi havia també
+    // la medalla 🏆/🥈/🥉, que duplicava la mateixa informació que les estrelles.
+    const won = isTrial ? solved >= TRIAL_WIN_AT : stars >= 2;
+    // Al contrarellotge el compte és de pobles (encert / saltat / fallat); a la
+    // resta, de punts. Un mateix lloc, dos recomptes. Les estrelles no hi
+    // surten: ja es veuen a sobre i seria repetir la mateixa dada.
+    const stats = isTrial
+      ? [
+          { value: solved, label: "encerts" },
+          { value: skipped, label: "saltats" },
+          { value: failed, label: "fallats" },
+        ]
+      : [
+          { value: `${result.score}/${result.max}`, label: "punts" },
+          { value: `${solved}/${result.results.length}`, label: "pobles" },
+        ];
     return (
-      <main className="app">
+      <main className={`app result${won ? " is-win" : " is-lose"}`}>
         <div className="score-card">
-          {isTrial
-            ? <img className="trial-fox trial-fox-result" src="/assets/contrarellotge-guineu.png" alt="" width={1254} height={1254} draggable={false} />
-            : <span className="medal" aria-hidden="true">{medalFor(stars)}</span>}
-          <h1>{TITLES[mode]}</h1>
-          {!isTrial && <p className="stars" role="img" aria-label={`${stars} de 3 estrelles`}>
-            {["⭐", "⭐", "⭐"].map((s, i) => (
-              <span key={i} style={{ opacity: i < stars ? 1 : 0.25 }} aria-hidden="true">{s}</span>
+          <div className="result-scene" aria-hidden="true" />
+          <img
+            className="result-fox"
+            src={won ? "/assets/win.png" : "/assets/lose.png"}
+            alt=""
+            width={344}
+            height={344}
+            draggable={false}
+          />
+          <h1>{won ? "Enhorabona!" : "Podem fer-ho millor"}</h1>
+          <p className="result-mode">
+            <img src={MODE_IMAGES[mode]} alt="" width={1254} height={1254} draggable={false} />
+            {TITLES[mode]}
+          </p>
+
+          {!isTrial && (
+            <p className="stars" role="img" aria-label={`${stars} de 3 estrelles`}>
+              {["⭐", "⭐", "⭐"].map((s, i) => (
+                <span key={i} style={{ opacity: i < stars ? 1 : 0.25 }} aria-hidden="true">{s}</span>
+              ))}
+            </p>
+          )}
+
+          <ul className="result-stats">
+            {stats.map((s) => (
+              <li key={s.label}>
+                <b>{s.value}</b>
+                <span>{s.label}</span>
+              </li>
             ))}
-          </p>}
-          <p className="big">
-            {result.score} <span className="progress">{isTrial ? "pobles" : `/ ${result.max}`}</span>
-          </p>
-          <p className="progress">
-            {isTrial ? `Temps esgotat! ${result.results.filter((r) => r.reason === "skipped").length} salts · ${result.results.filter((r) => r.reason === "failed").length} pobles fallats` : `Has encertat ${solved} de ${result.results.length} ${mode === "music" ? "grups" : "pobles"}`}
-          </p>
+          </ul>
+
+          {isTrial && <p className="result-note">Temps esgotat!</p>}
           {isBest && (
             <p className="best">
               <Icon name="trophy" size={18} /> Millor marca personal!

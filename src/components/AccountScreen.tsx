@@ -176,10 +176,10 @@ export default function AccountScreen({
       )}
       {api.loginHint && <p className="help">🧪 {api.loginHint}</p>}
 
-      <div className="tabs" role="tablist">
-        <button role="tab" aria-selected={tab === "login"} className={tab === "login" ? "" : "ghost"}
+      <div className="tabs tabs--segmented" role="tablist">
+        <button role="tab" aria-selected={tab === "login"}
           onClick={() => setTab("login")}>Entrar</button>
-        <button role="tab" aria-selected={tab === "signup"} className={tab === "signup" ? "" : "ghost"}
+        <button role="tab" aria-selected={tab === "signup"}
           onClick={() => setTab("signup")}>Crear compte</button>
       </div>
 
