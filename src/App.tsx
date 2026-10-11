@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import Game from "./components/Game";
+import InverseGame from "./components/InverseGame";
 import TimeTrial, { TimeTrialRules } from "./components/TimeTrial";
 import ProposeForm from "./components/ProposeForm";
 import { puzzles, type Puzzle } from "./data/puzzles";
@@ -40,6 +41,7 @@ const TITLES: Record<Mode, string> = {
   infinite: "Mode infinit",
   hard: "Mode difícil",
   timeTrial: "Contrarellotge",
+  inverse: "Invers",
 };
 
 const MODE_ICONS: Record<Mode, IconName> = {
@@ -48,6 +50,7 @@ const MODE_ICONS: Record<Mode, IconName> = {
   infinite: "infinity",
   hard: "flame",
   timeTrial: "timer",
+  inverse: "reverse",
 };
 
 interface ModeMeta {
@@ -61,6 +64,7 @@ interface ModeMeta {
 }
 
 const MODES: ModeMeta[] = [
+  { mode: "inverse", icon: "reverse", title: "Invers", sub: "Del poble als emojis", variant: "blue", src: "/assets/invers-guineu.png" },
   { mode: "timeTrial", icon: "timer", title: "Contrarellotge", sub: "2 minuts i bonus de temps", variant: "orange", src: "/assets/contrarellotge-guineu.png" },
   { mode: "ten", icon: "target", title: "Endivina 10", sub: "10 pobles d'una tirada", variant: "blue", src: "/assets/endivina-deu-guineu.png" },
   { mode: "hard", icon: "flame", title: "Mode difícil", sub: "Sense pistes i 3 intents", variant: "coral", src: "/assets/dificil-guineu.png" },
@@ -125,7 +129,7 @@ export default function App() {
     setDeck(
       m === "daily"
         ? dailyPuzzles()
-        : m === "ten" || m === "hard"
+        : m === "ten" || m === "hard" || m === "inverse"
         ? shuffle(pool).slice(0, 10)
         : shuffle(pool)
     );
@@ -143,7 +147,7 @@ export default function App() {
 
   const finish = (res: GameResult) => {
     // Inclou també l'últim encert si el temps s'esgota abans del render següent.
-    const completed = mode === "timeTrial"
+    const completed = mode === "timeTrial" || mode === "inverse"
       ? res.results.reduce((saved, r) => r.status === "correct" && r.answer ? unlockTown(saved, r.answer) : saved, records)
       : records;
     const { records: next, isBest } = recordResult(completed, mode, res);
@@ -175,6 +179,7 @@ export default function App() {
   };
 
   if (screen === "play") {
+    if (mode === "inverse") return <InverseGame deck={deck} pool={pool} onFinish={finish} onSolve={onSolve} onExit={() => setScreen("menu")} />;
     if (mode === "timeTrial") return <TimeTrial deck={deck} pool={pool} onFinish={finish} onSolve={onSolve} onExit={() => setScreen("menu")} />;
     return (
       <Game
@@ -277,7 +282,7 @@ export default function App() {
     );
   }
   if (screen === "records") {
-    const { daily, ten, hard, infinite, timeTrial } = records;
+    const { daily, ten, hard, infinite, timeTrial, inverse } = records;
     return (
       <main className="app">
         <div className="topbar">
@@ -310,6 +315,11 @@ export default function App() {
           <h3><Icon name="timer" size={18} /> Contrarellotge</h3>
           <p>Més pobles encertats: <b>{timeTrial.best}</b></p>
           <p>Partides: <b>{timeTrial.played}</b></p>
+        </section>
+        <section className="stats">
+          <h3><Icon name="reverse" size={18} /> Invers</h3>
+          <p>Millor puntuació: <b>{inverse.best} / 30</b></p>
+          <p>Partides: <b>{inverse.played}</b></p>
         </section>
         {/* El retorn al menú ja hi és a la barra superior: aquí només
             l'acció destructiva, que no es pot posar al costat de l'ull. */}

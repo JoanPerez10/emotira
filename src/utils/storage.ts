@@ -8,6 +8,7 @@ export const emptyRecords = (): Records => ({
   ten: { played: 0, best: 0 },
   hard: { played: 0, best: 0 },
   timeTrial: { played: 0, best: 0 },
+  inverse: { played: 0, best: 0 },
   infinite: { played: 0, bestSolved: 0, bestStreak: 0 },
   unlockedTowns: [],
 });
@@ -23,6 +24,7 @@ export function loadRecords(): Records {
       ten: { ...base.ten, ...p.ten },
       hard: { ...base.hard, ...p.hard },
       timeTrial: { ...base.timeTrial, ...p.timeTrial },
+      inverse: { ...base.inverse, ...p.inverse },
       infinite: { ...base.infinite, ...p.infinite },
       // Les dades guardades abans de la Col·lecció no tenen aquest camp
       unlockedTowns: Array.isArray(p.unlockedTowns)
@@ -86,7 +88,7 @@ export function recordResult(
         .map((x) => (x.status === "revealed" ? "🟥" : x.hints > 0 ? "🟨" : "🟩"))
         .join(""),
     };
-  } else if (mode === "ten" || mode === "hard") {
+  } else if (mode === "ten" || mode === "hard" || mode === "inverse") {
     const s = r[mode];
     s.played += 1;
     if (res.score > s.best) {
