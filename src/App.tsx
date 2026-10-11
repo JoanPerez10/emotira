@@ -14,11 +14,17 @@ import {
   recordResult,
   saveRecords,
   unlockTown,
+  normalizeRecords,
 } from "./utils/storage";
 import "./App.css";
 import { api } from "./api";
 import AdminPanel from "./components/AdminPanel";
 import VoteScreen from "./components/VoteScreen";
+import AccountScreen from "./components/AccountScreen";
+import GroupsScreen from "./components/GroupsScreen";
+import RankingScreen from "./components/RankingScreen";
+import type { Session } from "./api/types";
+import { MODES as ALL_MODES, MODE_TITLES as TITLES, MODE_ICONS, scoreOf } from "./modes";
 import Icon, { type IconName } from "./components/Icon";
 
 // El mapa de municipis pesa ~125 KB: només es descarrega en obrir la Col·lecció
@@ -33,25 +39,10 @@ type Screen =
   | "propose"
   | "vote"
   | "admin"
-  | "collection";
-
-const TITLES: Record<Mode, string> = {
-  daily: "Repte diari",
-  ten: "Endivina 10",
-  infinite: "Mode infinit",
-  hard: "Mode difícil",
-  timeTrial: "Contrarellotge",
-  inverse: "Invers",
-};
-
-const MODE_ICONS: Record<Mode, IconName> = {
-  daily: "calendar",
-  ten: "target",
-  infinite: "infinity",
-  hard: "flame",
-  timeTrial: "timer",
-  inverse: "reverse",
-};
+  | "collection"
+  | "account"
+  | "ranking"
+  | "groups";
 
 interface ModeMeta {
   mode: Mode;
@@ -102,6 +93,8 @@ export default function App() {
   const [isBest, setIsBest] = useState(false);
   const [copied, setCopied] = useState(false);
   const [extra, setExtra] = useState<Puzzle[]>([]);
+  const [session, setSession] = useState<Session | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     api.fetchAcceptedPuzzles().then(setExtra).catch(() => {});
@@ -118,9 +111,68 @@ export default function App() {
     return () => window.removeEventListener("hashchange", check);
   }, []);
 
+  // Sessió
+  useEffect(() => {
+    if (!api.enabled) return;
+    let alive = true;
+    api.auth.getSession().then((s) => {
+      if (alive) setSession(s);
+    });
+    const off = api.auth.onChange((s) => {
+      if (alive) {
+        setSession(s);
+        if (!s) setRecords(loadRecords());
+      }
+    });
+    return () => {
+      alive = false;
+      off();
+    };
+  }, []);
+
+  // Rècords: de la BD si hi ha sessió; del navegador si som convidats
+  const userId = session?.id ?? null;
+  useEffect(() => {
+    if (!userId) return;
+    let alive = true;
+    (async () => {
+      setSyncing(true);
+      try {
+        const cloud = await api.records.load();
+        if (!alive) return;
+        if (cloud) {
+          const norm = normalizeRecords(cloud);
+          setRecords(norm);
+          saveRecords(norm);
+          for (const m of ALL_MODES) {
+            const val = scoreOf(norm, m);
+            if (val > 0) api.scores.submit(m, val).catch(() => {});
+          }
+        } else {
+          // Primera vegada: pugem els rècords que ja tenies com a convidat
+          const local = loadRecords();
+          setRecords(local);
+          await api.records.save(local);
+          for (const m of ALL_MODES) {
+            if (scoreOf(local, m) > 0) await api.scores.submit(m, scoreOf(local, m));
+          }
+        }
+      } catch {
+        /* ens quedem amb el que hi ha */
+      } finally {
+        if (alive) setSyncing(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [userId]);
+
   const todayResult = records.daily.history[todayKey()];
 
   const start = (m: Mode, ready = false) => {
+    if (syncing) return;
+
     setMode(m);
     if (m === "timeTrial" && !ready) {
       setScreen("trialRules");
@@ -143,6 +195,9 @@ export default function App() {
     if (next === records) return;
     setRecords(next);
     saveRecords(next);
+    if (session) {
+      api.records.save(next).catch(() => {});
+    }
   };
 
   const finish = (res: GameResult) => {
@@ -153,6 +208,10 @@ export default function App() {
     const { records: next, isBest } = recordResult(completed, mode, res);
     setRecords(next);
     saveRecords(next);
+    if (session) {
+      api.records.save(next).catch(() => {});
+      api.scores.submit(mode, scoreOf(next, mode)).catch(() => {});
+    }
     setResult(res);
     setIsBest(isBest);
     setCopied(false);
@@ -270,6 +329,27 @@ export default function App() {
     return <VoteScreen onExit={() => setScreen("menu")} />;
   }
 
+  if (screen === "account") {
+    return (
+      <AccountScreen
+        session={session}
+        records={records}
+        onExit={() => setScreen("menu")}
+        onGoToRanking={() => setScreen("ranking")}
+        onGoToGroups={() => setScreen("groups")}
+      />
+    );
+  }
+  if (screen === "ranking") {
+    return (
+      <RankingScreen session={session} onExit={() => setScreen("menu")} onLogin={() => setScreen("account")} />
+    );
+  }
+  if (screen === "groups") {
+    return (
+      <GroupsScreen session={session} onExit={() => setScreen("menu")} onLogin={() => setScreen("account")} />
+    );
+  }
   if (screen === "collection") {
     return (
       <Suspense fallback={<main className="app"><p className="progress">Carregant el mapa…</p></main>}>
@@ -279,6 +359,7 @@ export default function App() {
           onExit={() => setScreen("menu")}
         />
       </Suspense>
+
     );
   }
   if (screen === "records") {
@@ -324,7 +405,9 @@ export default function App() {
         {/* El retorn al menú ja hi és a la barra superior: aquí només
             l'acció destructiva, que no es pot posar al costat de l'ull. */}
         <div className="actions">
-          <button className="danger-text" onClick={resetRecords}>Esborrar tots els rècords</button>
+          {!session && (
+            <button className="danger-text" onClick={resetRecords}>Esborrar tots els rècords</button>
+          )}
         </div>
       </main>
     );
@@ -350,7 +433,16 @@ export default function App() {
           <div className="chips">
             <span className="chip chip-fire">Ratxa: {streak} {streak === 1 ? "dia" : "dies"}</span>
             <span className="chip chip-map">{found} {found === 1 ? "poble" : "pobles"} trobats</span>
+            <button
+              type="button"
+              className="chip chip-user"
+              onClick={() => setScreen("account")}
+              title="Gestiona el teu compte"
+            >
+              {session ? `👤 ${session.username}` : "👤 Convidat"}
+            </button>
           </div>
+          {syncing && <p className="help">Sincronitzant els teus rècords…</p>}
         </div>
       </header>
 
@@ -415,7 +507,12 @@ export default function App() {
       </nav>
 
       <div className="menu-links">
+        <button className="ghost" onClick={() => setScreen("ranking")}>Rànquing</button>
+        <button className="ghost" onClick={() => setScreen("groups")}>Grups</button>
         <button className="ghost" onClick={() => setScreen("records")}>Els teus rècords</button>
+        <button className="ghost" onClick={() => setScreen("account")}>
+          {session ? "El meu compte" : "Entrar / Crear compte"}
+        </button>
         <button className="ghost" onClick={() => setScreen("propose")}>Proposa un poble</button>
         <button className="ghost" onClick={() => setScreen("vote")}>Vota propostes</button>
       </div>

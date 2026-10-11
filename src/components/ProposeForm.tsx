@@ -5,7 +5,7 @@ import { normalize } from "../utils/normalize";
 import { api, isMock } from "../api";
 import EmojiPicker from "./EmojiPicker";
 
-const SENT_KEY = "pobles-emoji:proposals-sent";
+const SENT_KEY = "emotira:proposals-sent";
 const MAX_PER_DAY = 5;
 const MAX_EMOJIS = 10;
 

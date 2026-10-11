@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
-import type { AdminSession, Decision, Proposal, Tally } from "../api/types";
+import type { Decision, Proposal, Session, Tally } from "../api/types";
 import { COMARQUES } from "../data/comarques";
 
 function Card({
@@ -65,7 +65,7 @@ function Card({
 }
 
 export default function AdminPanel({ onExit }: { onExit: () => void }) {
-  const [session, setSession] = useState<AdminSession | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -101,8 +101,24 @@ export default function AdminPanel({ onExit }: { onExit: () => void }) {
   }, []);
 
   useEffect(() => {
-    if (session) load();
-  }, [session, load]);
+    if (!session) return;
+    let alive = true;
+    api.admin
+      .listOpenProposals()
+      .then(({ rows: r, tallies: t }) => {
+        if (alive) {
+          setRows(r);
+          setTallies(t);
+          setError(null);
+        }
+      })
+      .catch((e) => {
+        if (alive) setError(e instanceof Error ? e.message : "Error desconegut");
+      });
+    return () => {
+      alive = false;
+    };
+  }, [session]);
 
   const login = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,6 +172,16 @@ export default function AdminPanel({ onExit }: { onExit: () => void }) {
           {error && <p className="error" role="alert">{error}</p>}
           <button type="submit">Entrar</button>
         </form>
+      </main>
+    );
+  }
+
+  if (!session.isAdmin) {
+    return (
+      <main className="app">
+        {header}
+        <p className="error">Aquest usuari ({session.username}) no és administrador.</p>
+        <button className="ghost" onClick={() => api.auth.signOut()}>Sortir</button>
       </main>
     );
   }

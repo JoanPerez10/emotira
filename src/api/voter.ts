@@ -1,4 +1,4 @@
-const VOTER_KEY = "pobles-emoji:voter-id";
+const VOTER_KEY = "emotira:voter-id";
 
 export const voterId = () => {
   try {
@@ -14,4 +14,4 @@ export const voterId = () => {
 };
 
 // Separat per mode, perquè els ids simulats no es barregin amb els reals
-export const votedStorageKey = (mode: string) => `pobles-emoji:voted:${mode}`;
+export const votedStorageKey = (mode: string) => `emotira:voted:${mode}`;

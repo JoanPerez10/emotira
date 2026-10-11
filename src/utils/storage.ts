@@ -1,7 +1,7 @@
 import type { GameResult, Mode, PuzzleResult, Records } from "../types";
 import { todayKey, yesterdayKey } from "./daily";
 
-const KEY = "pobles-emoji:records:v1";
+const KEY = "emotira:records:v1";
 
 export const emptyRecords = (): Records => ({
   daily: { played: 0, streak: 0, bestStreak: 0, lastDate: null, history: {} },
@@ -13,24 +13,27 @@ export const emptyRecords = (): Records => ({
   unlockedTowns: [],
 });
 
+export function normalizeRecords(p: Partial<Records> | null | undefined): Records {
+  const base = emptyRecords();
+  const towns = p?.unlockedTowns;
+  return {
+    daily: { ...base.daily, ...p?.daily },
+    ten: { ...base.ten, ...p?.ten },
+    hard: { ...base.hard, ...p?.hard },
+    timeTrial: { ...base.timeTrial, ...p?.timeTrial },
+    inverse: { ...base.inverse, ...p?.inverse },
+    infinite: { ...base.infinite, ...p?.infinite },
+    // Les dades guardades abans de la Col·lecció no tenen aquest camp
+    unlockedTowns: Array.isArray(towns)
+      ? [...new Set<string>(towns.filter((t): t is string => typeof t === "string"))]
+      : [],
+  };
+}
+
 export function loadRecords(): Records {
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return emptyRecords();
-    const p = JSON.parse(raw);
-    const base = emptyRecords();
-    return {
-      daily: { ...base.daily, ...p.daily },
-      ten: { ...base.ten, ...p.ten },
-      hard: { ...base.hard, ...p.hard },
-      timeTrial: { ...base.timeTrial, ...p.timeTrial },
-      inverse: { ...base.inverse, ...p.inverse },
-      infinite: { ...base.infinite, ...p.infinite },
-      // Les dades guardades abans de la Col·lecció no tenen aquest camp
-      unlockedTowns: Array.isArray(p.unlockedTowns)
-        ? [...new Set<string>(p.unlockedTowns.filter((t: unknown) => typeof t === "string"))]
-        : [],
-    };
+    return normalizeRecords(raw ? JSON.parse(raw) : null);
   } catch {
     return emptyRecords();
   }

@@ -615,6 +615,21 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
 }
 .chip-fire { background: var(--gold-wash); border-color: var(--gold); color: var(--gold-ink); }
 .chip-map { background: var(--orange-wash); border-color: var(--orange); color: var(--orange-ink); }
+.chip-user { background: var(--blue-wash); border-color: var(--blue); color: var(--blue-ink); }
+button.chip {
+  min-height: auto;
+  cursor: pointer;
+  box-shadow: none;
+  transform: none;
+}
+button.chip:hover:not(:disabled) {
+  background: #dce9fa;
+  filter: none;
+}
+button.chip:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: none;
+}
 
 /* Accions secundàries, com enllaços suaus sota el menú */
 .menu-links {
@@ -1121,6 +1136,109 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   border-bottom: 2px solid var(--gold);
 }
 .dev-banner .ghost { color: var(--gold-ink); margin-left: 0.5rem; }
+
+/* ── Pestanyes i rànquing (comptes / grups) ──────────────── */
+.tabs {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.tabs-modes {
+  display: flex;
+  align-content: center;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.ranking {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+  text-align: left;
+}
+.ranking li {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.65rem 0.9rem;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-radius: var(--r-md);
+  margin: 0.4rem 0;
+  box-shadow: var(--shadow-sm);
+}
+.ranking li.me {
+  background: var(--blue-wash);
+  border-color: var(--blue);
+  box-shadow: 0 0 0 1px var(--blue);
+}
+.ranking li.gap {
+  justify-content: center;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--muted);
+}
+.ranking .pos {
+  font-weight: 900;
+  min-width: 2.5rem;
+  color: var(--muted);
+}
+.ranking .name {
+  flex: 1;
+  font-weight: 700;
+}
+.ranking .val {
+  font-weight: 900;
+  color: var(--blue-ink);
+}
+
+.code {
+  font-size: 1.6rem;
+  letter-spacing: 0.2rem;
+  font-weight: 900;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  color: var(--blue-ink);
+  padding: 0.25rem 0.85rem;
+  border-radius: var(--r-md);
+  display: inline-block;
+  box-shadow: var(--shadow-sm);
+}
+
+.account-stats-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.8rem 0;
+  text-align: left;
+}
+.account-stats-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.2rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.95rem;
+}
+.account-stats-list li:last-child {
+  border-bottom: none;
+}
+.account-stats-list li span {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+.account-stats-list li b {
+  color: var(--blue-ink);
+  font-weight: 800;
+}
 
 /* ============================================================
    Adaptació a mòbil i preferències de moviment
