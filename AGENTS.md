@@ -10,6 +10,7 @@
 - El repte diari és determinista per data local: no canviïs la selecció o la ratxa accidentalment en afegir altres modes.
 - Mantén la compatibilitat de localStorage amb registres antics: afegeix valors per defecte i no esborris el progrés existent.
 - Desa els pobles encertats a la col·lecció en el moment de resoldre'ls.
+- Al mode Invers: entrada directa, 10 pobles i intents il·limitats, sense cors. Segmenta els emojis per grafemes; permet còpies repetides. Conserva només les posicions correctes en fallar. Les dues pistes voluntàries eliminen dos distractors cadascuna (10 → 8 → 6). No moguis el selector ni eliminis emojis de la resposta. Punts: 3 menys la suma d'errors i pistes, amb un mínim d'1 per encert; desa aquesta penalització limitada a 2 al camp hints del resultat. Fallar no revela la solució. «Em rendeixo» revela la combinació i avança amb 0 punts.
 - Al contrarellotge, una resposta incorrecta buida les lletres i retorna el focus al camp. El primer error desbloqueja la comarca i el segon la primera lletra; les pistes es reinicien amb cada poble.
 - Al contrarellotge: 120 segons inicials i 3 intents per poble. Saltar resta 2 segons i reinicia el bonus; el tercer error revela la resposta i avança sense restar temps, però també reinicia el bonus. Cada 5 encerts seguits +5 segons, fins a 180 segons acumulats. El rellotge segueix durant les transicions i en segon pla; no acceptis respostes fora de temps.
 
