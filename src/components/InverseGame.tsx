@@ -139,13 +139,19 @@ function InverseRound({ puzzle, pool, isLast, onSolve, onDone }: {
           </button>
         ))}
       </div>
-      <div ref={selectorRef} className="inverse-options" role="group" aria-label="Emojis disponibles; pots repetir-los">
+      {result?.status !== "revealed" && <div ref={selectorRef} className="inverse-options" role="group" aria-label="Emojis disponibles; pots repetir-los">
         {options.map((emoji) => removed.includes(emoji)
           ? <span key={emoji} className="inverse-option-gap" aria-hidden="true" />
           : <button key={emoji} type="button" className="inverse-option" disabled={!playing || full}
               aria-label={`Afegir ${emoji}`} onClick={() => select(emoji)}>{emoji}</button>)}
-      </div>
-      <p className={`inverse-message${result?.status === "correct" ? " is-correct" : ""}`} role="status">{message || "\u00a0"}</p>
+      </div>}
+      <div className={result?.status === "revealed" ? "feedback feedback-nope" : undefined}>
+      {result?.status === "revealed" ? (
+        <div role="status">
+          <h2>Aquesta era la combinació:</h2>
+          <p>{puzzle.explanation}</p>
+        </div>
+      ) : <p className={`inverse-message${result?.status === "correct" ? " is-correct" : ""}`} role="status">{message || "\u00a0"}</p>}
       <div className="actions">
         {!playing ? (
           <button ref={nextRef} type="button" onClick={advance}>{isLast ? "Veure el resultat" : "Poble següent"}</button>
@@ -156,6 +162,7 @@ function InverseRound({ puzzle, pool, isLast, onSolve, onDone }: {
         </button>
         <button type="button" className="ghost" disabled={!playing} onClick={surrender}>Em rendeixo</button>
         </>}
+      </div>
       </div>
     </section>
   );
