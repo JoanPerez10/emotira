@@ -31,6 +31,17 @@ export const MODE_ICONS: Record<Mode, IconName> = {
   inverse: "reverse",
 };
 
+/** Retrat del mode a la pantalla de resultat. S'aprofita la mateixa imatge que
+ * al menú, enlloc de duplicar-ne una miniatura; el CSS la retalla a 1,7 rem. */
+export const MODE_IMAGES: Record<Mode, string> = {
+  daily: "/assets/repte-diari-guineu.png",
+  ten: "/assets/endivina-deu-guineu.png",
+  hard: "/assets/dificil-guineu.png",
+  infinite: "/assets/infinit-guineu.png",
+  timeTrial: "/assets/contrarellotge-guineu.png",
+  inverse: "/assets/invers-guineu.png",
+};
+
 export const scoreOf = (r: Records, m: Mode): number =>
   m === "daily" ? r.daily.bestStreak
   : m === "ten" ? r.ten.best

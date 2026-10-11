@@ -8,6 +8,10 @@ export const TRIAL_PENALTY = 2;
 export const TRIAL_ATTEMPTS = 3;
 export const TRIAL_BONUS_STEPS = 5;
 export const TRIAL_BONUS_SECONDS = 5;
+// Pobles per celebrar la partida. Aquí el percentatge no serveix: el
+// denominador són els pobles que has arribat a veure, no un total fix, i
+// encertar-ne 3 de 3 donaria un 100% que no significa res.
+export const TRIAL_WIN_AT = 5;
 
 export interface TrialState {
   queue: Puzzle[];

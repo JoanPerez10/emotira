@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 160" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+  <!-- Paisatge de fons per a la targeta de resultat. Deu fer de decoració:
+       la part de dalt es renta cap al blanc perquè hi assegui el text. -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d6e8fd"/>
+      <stop offset="0.6" stop-color="#e9f0fb"/>
+      <stop offset="1" stop-color="#fdefdb"/>
+    </linearGradient>
+    <linearGradient id="wash" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.72"/>
+      <stop offset="1" stop-color="#ffffff"/>
+    </linearGradient>
+    <g id="pine">
+      <path d="M0 -58 L14 -32 L7 -32 L18 -10 L-18 -10 L-7 -32 L-14 -32 Z"/>
+      <rect x="-2.2" y="-10" width="4.4" height="10"/>
+    </g>
+    <g id="round">
+      <rect x="-2.2" y="-9" width="4.4" height="9"/>
+      <circle cx="0" cy="-24" r="15"/>
+      <circle cx="-10.5" cy="-15" r="11"/>
+      <circle cx="10.5" cy="-15" r="11"/>
+    </g>
+  </defs>
+
+  <rect width="400" height="160" fill="url(#sky)"/>
+  <circle cx="338" cy="34" r="19" fill="#fed54a" opacity="0.45"/>
+  <circle cx="52" cy="24" r="3" fill="#ffffff" opacity="0.7"/>
+  <circle cx="78" cy="34" r="4.5" fill="#ffffff" opacity="0.55"/>
+  <circle cx="120" cy="20" r="3" fill="#ffffff" opacity="0.6"/>
+
+  <!-- Serres al fons -->
+  <path d="M-10 128 L62 84 L134 128 Z" fill="#a9d5b6" opacity="0.5"/>
+  <path d="M112 130 L196 78 L280 130 Z" fill="#a9d5b6" opacity="0.38"/>
+
+  <!-- Bosc de mig fons -->
+  <g fill="#5aa672" opacity="0.5">
+    <use href="#pine" transform="translate(22,132) scale(0.82)"/>
+    <use href="#pine" transform="translate(64,136) scale(0.95)"/>
+    <use href="#round" transform="translate(104,134) scale(0.85)"/>
+    <use href="#pine" transform="translate(348,134) scale(0.88)"/>
+    <use href="#round" transform="translate(388,132) scale(0.8)"/>
+  </g>
+
+  <!-- Arbres de tardor, per lligar amb el tocos de la guineu -->
+  <g fill="#e08a4a" opacity="0.85">
+    <use href="#round" transform="translate(148,136) scale(0.9)"/>
+    <use href="#pine" transform="translate(246,138) scale(1)"/>
+  </g>
+
+  <!-- Bosc de davant -->
+  <g fill="#3d8a58">
+    <use href="#pine" transform="translate(46,140) scale(1.1)"/>
+    <use href="#round" transform="translate(300,140) scale(1.05)"/>
+    <use href="#pine" transform="translate(372,142) scale(1.15)"/>
+  </g>
+
+  <!-- Gespa i esbrollall -->
+  <path d="M0 140 Q100 132 200 139 T400 137 L400 160 L0 160 Z" fill="#7cb98a"/>
+  <g fill="#6aa97a">
+    <path d="M176 143 l3 -7 l3 7 z"/>
+    <path d="M186 145 l3 -8 l3 8 z"/>
+    <path d="M228 144 l3 -7 l3 7 z"/>
+  </g>
+
+  <!-- Es rent cap al blanc: sense línia dura on acaba el paisatge -->
+  <rect y="126" width="400" height="34" fill="url(#wash)"/>
+</svg>
