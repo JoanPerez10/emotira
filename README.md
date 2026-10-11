@@ -8,7 +8,6 @@ TypeScript i Vite. La mascota és la Guineu.
 - **Nom:** Emotira
 - **Mascota:** Guineu (`public/assets/main_menu_guini.png`, amb fons transparent)
 - **Logo:** `public/assets/logo.png` (app mòbil) · `public/favicon.png` (web, 256 px)
-- **Contrarellotge:** `public/assets/contrarellotge-guineu.png` (menú, normes i resultat)
 
 ### Paleta
 
@@ -56,26 +55,6 @@ npm run build:map  # regenera les dades del mapa
 - `src/data/puzzles.ts` — les pistes (emojis → nom del poble)
 - `src/utils/storage.ts` — rècords, ratxa i col·lecció (localStorage)
 - `src/api/` — Supabase (amb un `mockApi` per al mode mock)
-
-## Contrarellotge
-
-Des del menú, entra al mode, llegeix les normes i prem **Jugar** per iniciar el
-rellotge. Tens 120 segons i 3 intents per poble. Cada encert suma
-1 punt i compta per a la col·lecció. Saltar resta 2 segons i envia el poble al
-final de la cua; el tercer error revela el nom i avança sense restar temps.
-Les respostes incompletes no consumeixen intents, i s'accepten els àlies.
-Una resposta incorrecta buida les lletres. Després del primer error apareix
-la comarca com a pista; després del segon també es mostra la primera lletra.
-
-Cada 5 encerts seguits guanyes 5 segons, fins a 60 segons extra (3 minuts
-acumulats). Saltar o esgotar els intents reinicia el bonus; els dos primers
-errors no el trenquen. El rellotge continua durant les transicions i en segon
-pla. Al final es mostra només el resultat i els botons «Tornar a jugar» i
-«Menú», amb un rècord propi compatible amb el progrés desat abans d'afegir
-aquest mode.
-
-La lògica és a `src/utils/timeTrial.ts`; la interfície i les normes són a
-`src/components/TimeTrial.tsx`. Consulta `AGENTS.md` per a la guia dels agents.
 
 ## Pistes
 
