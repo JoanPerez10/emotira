@@ -58,6 +58,33 @@ npm run build:map  # regenera les dades del mapa
 
 ## Pistes
 
+### Mode Invers
+
+S'entra directament a una partida de 10 pobles, sense cronòmetre. Es mostra el
+nom del poble i una casella per emoji de la resposta. El jugador construeix la
+combinació tocant un selector de 10 emojis; pot repetir un emoji i retirar
+qualsevol còpia que encara no estigui fixada.
+
+Els intents són il·limitats. En fallar, es conserven en verd els emojis a la
+posició correcta i es buiden els altres espais, sense revelar la solució.
+El botó **Pista** elimina dos distractors (màxim dues pistes per
+poble: 10 → 8 → 6), sense moure les opcions restants ni eliminar cap emoji
+correcte. Si elimina un emoji que has posat, se'n buida la casella.
+**Em rendeixo** revela la combinació amb 0 punts i mostra l'explicació del poble
+amb la targeta de solució dels altres modes. L'explicació no apareix en fallar
+ni en encertar. Després d'encertar o rendir-se,
+cal prémer **Poble següent** o **Veure el resultat** al desè poble; no hi ha
+temporitzadors ni avanç automàtic. Els encerts donen
+3 punts inicials menys 1 per cada error o pista utilitzada, amb un mínim d'1
+punt per encert i un màxim de 30 per partida. Un error i una pista també deixen
+1 punt. Els encerts desbloquegen el poble a la col·lecció. No es mostren cors.
+
+La partida és a `src/components/InverseGame.tsx` i la segmentació d'emojis i
+generació d'opcions a `src/utils/inverse.ts`. La icona del menú és
+`public/assets/invers-guineu.png`.
+
+### Dades dels pobles
+
 A `src/data/puzzles.ts` cada poble té `emojis`, `answer`, `aliases` (formes
 alternatives acceptades), `comarca` i `explanation` (com es forma el nom).
 El joc treu accents, espais i apòstrofs: `normalize()` és el que accepta el
