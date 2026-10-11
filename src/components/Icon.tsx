@@ -5,8 +5,10 @@
  * línies es veuen iguals a tot arreu.
  */
 export type IconName =
+  | "timer"
   | "calendar"
   | "target"
+  | "reverse"
   | "flame"
   | "infinity"
   | "map"
@@ -23,6 +25,8 @@ interface Props {
 }
 
 const PATHS: Record<IconName, React.ReactNode> = {
+  reverse: <><path d="M4 7h16l-4-4M20 17H4l4 4" /><path d="M20 7v4M4 17v-4" /></>,
+  timer: <><circle cx="12" cy="13" r="8" /><path d="M12 9v4l3 2M9 2h6M12 2v3M18 6l2-2" /></>,
   calendar: (
     <>
       <rect x="3" y="4.5" width="18" height="16.5" rx="3.5" />
