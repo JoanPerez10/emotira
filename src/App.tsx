@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import Game from "./components/Game";
+import TimeTrial, { TimeTrialRules } from "./components/TimeTrial";
 import ProposeForm from "./components/ProposeForm";
 import { puzzles, type Puzzle } from "./data/puzzles";
 import type { GameResult, Mode, Records } from "./types";
@@ -24,6 +25,7 @@ const Collection = lazy(() => import("./components/Collection"));
 
 type Screen =
   | "menu"
+  | "trialRules"
   | "records"
   | "play"
   | "result"
@@ -37,6 +39,7 @@ const TITLES: Record<Mode, string> = {
   ten: "Endivina 10",
   infinite: "Mode infinit",
   hard: "Mode difícil",
+  timeTrial: "Contrarellotge",
 };
 
 const MODE_ICONS: Record<Mode, IconName> = {
@@ -44,6 +47,7 @@ const MODE_ICONS: Record<Mode, IconName> = {
   ten: "target",
   infinite: "infinity",
   hard: "flame",
+  timeTrial: "timer",
 };
 
 interface ModeMeta {
@@ -56,6 +60,7 @@ interface ModeMeta {
 }
 
 const MODES: ModeMeta[] = [
+  { mode: "timeTrial", icon: "timer", title: "Contrarellotge", sub: "2 minuts i bonus de temps", variant: "orange" },
   { mode: "ten", icon: "target", title: "Endivina 10", sub: "10 pobles d'una tirada", variant: "blue" },
   { mode: "hard", icon: "flame", title: "Mode difícil", sub: "Sense pistes i 3 intents", variant: "coral" },
   { mode: "infinite", icon: "infinity", title: "Mode infinit", sub: "Fins que et cansis", variant: "purple" },
@@ -110,8 +115,12 @@ export default function App() {
 
   const todayResult = records.daily.history[todayKey()];
 
-  const start = (m: Mode) => {
+  const start = (m: Mode, ready = false) => {
     setMode(m);
+    if (m === "timeTrial" && !ready) {
+      setScreen("trialRules");
+      return;
+    }
     setDeck(
       m === "daily"
         ? dailyPuzzles()
@@ -132,7 +141,11 @@ export default function App() {
   };
 
   const finish = (res: GameResult) => {
-    const { records: next, isBest } = recordResult(records, mode, res);
+    // Inclou també l'últim encert si el temps s'esgota abans del render següent.
+    const completed = mode === "timeTrial"
+      ? res.results.reduce((saved, r) => r.status === "correct" && r.answer ? unlockTown(saved, r.answer) : saved, records)
+      : records;
+    const { records: next, isBest } = recordResult(completed, mode, res);
     setRecords(next);
     saveRecords(next);
     setResult(res);
@@ -161,6 +174,7 @@ export default function App() {
   };
 
   if (screen === "play") {
+    if (mode === "timeTrial") return <TimeTrial deck={deck} pool={pool} onFinish={finish} onSolve={onSolve} onExit={() => setScreen("menu")} />;
     return (
       <Game
         key={`${mode}-${deck.length}-${deck[0]?.answer}`}
@@ -177,25 +191,32 @@ export default function App() {
     );
   }
 
+  if (screen === "trialRules") {
+    return <TimeTrialRules onPlay={() => start("timeTrial", true)} onExit={() => setScreen("menu")} />;
+  }
+
   if (screen === "result" && result) {
     const solved = result.results.filter((r) => r.status === "correct").length;
     const stars = starsFor(result.score, result.max);
     const isDaily = mode === "daily";
+    const isTrial = mode === "timeTrial";
     return (
       <main className="app">
         <div className="score-card">
-          <span className="medal" aria-hidden="true">{medalFor(stars)}</span>
+          {isTrial
+            ? <img className="trial-fox trial-fox-result" src="/assets/contrarellotge-guineu.png" alt="" width={1254} height={1254} draggable={false} />
+            : <span className="medal" aria-hidden="true">{medalFor(stars)}</span>}
           <h1>{TITLES[mode]}</h1>
-          <p className="stars" role="img" aria-label={`${stars} de 3 estrelles`}>
+          {!isTrial && <p className="stars" role="img" aria-label={`${stars} de 3 estrelles`}>
             {["⭐", "⭐", "⭐"].map((s, i) => (
               <span key={i} style={{ opacity: i < stars ? 1 : 0.25 }} aria-hidden="true">{s}</span>
             ))}
-          </p>
+          </p>}
           <p className="big">
-            {result.score} <span className="progress">/ {result.max}</span>
+            {result.score} <span className="progress">{isTrial ? "pobles" : `/ ${result.max}`}</span>
           </p>
           <p className="progress">
-            Has encertat {solved} de {result.results.length} pobles
+            {isTrial ? `Temps esgotat! ${result.results.filter((r) => r.reason === "skipped").length} salts · ${result.results.filter((r) => r.reason === "failed").length} pobles fallats` : `Has encertat ${solved} de ${result.results.length} pobles`}
           </p>
           {isBest && (
             <p className="best">
@@ -255,7 +276,7 @@ export default function App() {
     );
   }
   if (screen === "records") {
-    const { daily, ten, hard, infinite } = records;
+    const { daily, ten, hard, infinite, timeTrial } = records;
     return (
       <main className="app">
         <div className="topbar">
@@ -283,6 +304,11 @@ export default function App() {
           <p>Millor ratxa d'encerts: <b>{infinite.bestStreak}</b></p>
           <p>Més encerts en una partida: <b>{infinite.bestSolved}</b></p>
           <p>Partides: <b>{infinite.played}</b></p>
+        </section>
+        <section className="stats">
+          <h3><Icon name="timer" size={18} /> Contrarellotge</h3>
+          <p>Més pobles encertats: <b>{timeTrial.best}</b></p>
+          <p>Partides: <b>{timeTrial.played}</b></p>
         </section>
         {/* El retorn al menú ja hi és a la barra superior: aquí només
             l'acció destructiva, que no es pot posar al costat de l'ull. */}
@@ -356,8 +382,10 @@ export default function App() {
         <div className="grid">
           {MODES.map(({ mode: m, icon, title, sub, variant }) => (
             <button key={m} className={`mode-card v-${variant}`} onClick={() => start(m)}>
-              <span className="mode-icon">
-                <Icon name={icon} size={21} />
+              <span className={`mode-icon${m === "timeTrial" ? " mode-icon-image" : ""}`}>
+                {m === "timeTrial"
+                  ? <img src="/assets/contrarellotge-guineu.png" alt="" width={1254} height={1254} draggable={false} />
+                  : <Icon name={icon} size={21} />}
               </span>
               <span className="mode-title">{title}</span>
               <span className="mode-sub">{sub}</span>
