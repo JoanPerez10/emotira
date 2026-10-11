@@ -43,14 +43,15 @@ export default function InverseGame({ deck, pool, onSolve, onFinish, onExit }: P
         <span className="progress">Poble {index + 1} de {deck.length}</span>
         <span className="progress">{score} punts</span>
       </div>
-      <InverseRound key={index} puzzle={deck[index]} pool={pool} onSolve={onSolve} onDone={complete} />
+      <InverseRound key={index} puzzle={deck[index]} pool={pool} isLast={index === deck.length - 1} onSolve={onSolve} onDone={complete} />
     </main>
   );
 }
 
-function InverseRound({ puzzle, pool, onSolve, onDone }: {
+function InverseRound({ puzzle, pool, isLast, onSolve, onDone }: {
   puzzle: Puzzle;
   pool: Puzzle[];
+  isLast: boolean;
   onSolve: Props["onSolve"];
   onDone: (result: PuzzleResult) => void;
 }) {
@@ -64,6 +65,8 @@ function InverseRound({ puzzle, pool, onSolve, onDone }: {
   const [message, setMessage] = useState("");
   const selectorRef = useRef<HTMLDivElement>(null);
   const checkRef = useRef<HTMLButtonElement>(null);
+  const nextRef = useRef<HTMLButtonElement>(null);
+  const completedRef = useRef(false);
   const playing = result === null;
   const full = slots.every((emoji) => emoji !== null);
   const hints = removed.length / 2;
@@ -71,16 +74,19 @@ function InverseRound({ puzzle, pool, onSolve, onDone }: {
   const points = 3 - penalty;
 
   useEffect(() => {
-    if (!playing) return;
+    if (!playing) {
+      nextRef.current?.focus();
+      return;
+    }
     if (full) checkRef.current?.focus();
     else selectorRef.current?.querySelector<HTMLButtonElement>("button:not(:disabled)")?.focus();
   }, [playing, full, hints]);
 
-  useEffect(() => {
-    if (!result) return;
-    const timeout = window.setTimeout(() => onDone(result), result.status === "correct" ? 900 : 2000);
-    return () => window.clearTimeout(timeout);
-  }, [result, onDone]);
+  const advance = () => {
+    if (!result || completedRef.current) return;
+    completedRef.current = true;
+    onDone(result);
+  };
 
   const select = (emoji: string) => {
     if (!playing || full) return;
@@ -141,11 +147,15 @@ function InverseRound({ puzzle, pool, onSolve, onDone }: {
       </div>
       <p className={`inverse-message${result?.status === "correct" ? " is-correct" : ""}`} role="status">{message || "\u00a0"}</p>
       <div className="actions">
+        {!playing ? (
+          <button ref={nextRef} type="button" onClick={advance}>{isLast ? "Veure el resultat" : "Poble següent"}</button>
+        ) : <>
         <button ref={checkRef} type="button" disabled={!playing || !full} onClick={submit}>Comprovar</button>
         <button type="button" className="accent" disabled={!playing || hints >= 2} onClick={useHint}>
           {hints >= 2 ? "Ja ho saps tot" : `Pista (${hints}/2)`}
         </button>
         <button type="button" className="ghost" disabled={!playing} onClick={surrender}>Em rendeixo</button>
+        </>}
       </div>
     </section>
   );

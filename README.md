@@ -91,7 +91,9 @@ posició correcta i es buiden els altres espais, sense revelar la solució.
 El botó **Pista** elimina dos distractors (màxim dues pistes per
 poble: 10 → 8 → 6), sense moure les opcions restants ni eliminar cap emoji
 correcte. Si elimina un emoji que has posat, se'n buida la casella.
-**Em rendeixo** revela la combinació i avança amb 0 punts. Els encerts donen
+**Em rendeixo** revela la combinació amb 0 punts. Després d'encertar o rendir-se,
+cal prémer **Poble següent** o **Veure el resultat** al desè poble; no hi ha
+temporitzadors ni avanç automàtic. Els encerts donen
 3 punts inicials menys 1 per cada error o pista utilitzada, amb un mínim d'1
 punt per encert i un màxim de 30 per partida. Un error i una pista també deixen
 1 punt. Els encerts desbloquegen el poble a la col·lecció. No es mostren cors.
