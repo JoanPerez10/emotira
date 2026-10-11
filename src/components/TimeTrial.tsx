@@ -83,6 +83,7 @@ export default function TimeTrial({ deck, pool, onSolve, onFinish, onExit }: Pro
   const playing = state.status === "playing";
 
   const submit = (text: string) => {
+    if (!playing) return;
     dispatch({ type: "submit", text, turn: state.turn, now: performance.now() });
   };
 
@@ -107,13 +108,19 @@ export default function TimeTrial({ deck, pool, onSolve, onFinish, onExit }: Pro
       <p className="puzzle-emoji">{puzzle.emojis}</p>
       {playing && state.fails >= 1 && puzzle.comarca && <p className="hint"><Icon name="lightbulb" size={18} /><span>Comarca: {puzzle.comarca}</span></p>}
       {playing && state.fails >= 2 && <p className="hint"><Icon name="lightbulb" size={18} /><span>Comença per «{puzzle.answer[0].toUpperCase()}»</span></p>}
-      <LetterInput key={`${state.turn}-${state.fails}`} ref={inputRef} words={words} onSubmit={submit}
+      <LetterInput resetKey={`${state.turn}-${state.fails}`} ref={inputRef} words={words} onSubmit={submit} nativeTapFocus
         reveal={playing ? null : { text: normalize(puzzle.answer), kind: state.status === "correct" ? "ok" : "nope" }}
         shakeKey={state.fails} />
       <span className="sr-only" role="status">{state.message}</span>
       <div className="actions">
-        <button disabled={!playing} onClick={() => inputRef.current?.submit()}>Comprovar</button>
-        <button className="secondary" disabled={!playing} onClick={() => dispatch({ type: "skip", turn: state.turn, now: performance.now() })}>Saltar −2 s</button>
+        <button disabled={!playing} onPointerDown={(e) => e.preventDefault()} onClick={() => {
+          inputRef.current?.focus();
+          inputRef.current?.submit();
+        }}>Comprovar</button>
+        <button className="secondary" disabled={!playing} onClick={() => {
+          dispatch({ type: "skip", turn: state.turn, now: performance.now() });
+          inputRef.current?.focus();
+        }}>Saltar −2 s</button>
       </div>
     </main>
   );
