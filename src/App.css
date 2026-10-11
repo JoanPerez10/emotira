@@ -1146,6 +1146,14 @@ button.chip:active:not(:disabled) {
   margin: 1rem 0;
 }
 
+.tabs-modes {
+  display: flex;
+  align-content: center;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
 .ranking {
   list-style: none;
   padding: 0;
@@ -1200,6 +1208,36 @@ button.chip:active:not(:disabled) {
   border-radius: var(--r-md);
   display: inline-block;
   box-shadow: var(--shadow-sm);
+}
+
+.account-stats-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.8rem 0;
+  text-align: left;
+}
+.account-stats-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.2rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.95rem;
+}
+.account-stats-list li:last-child {
+  border-bottom: none;
+}
+.account-stats-list li span {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+.account-stats-list li b {
+  color: var(--blue-ink);
+  font-weight: 800;
 }
 
 /* ============================================================

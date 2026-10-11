@@ -1,7 +1,7 @@
 import type { GameResult, Mode, PuzzleResult, Records } from "../types";
 import { todayKey, yesterdayKey } from "./daily";
 
-const KEY = "pobles-emoji:records:v1";
+const KEY = "emotira:records:v1";
 
 export const emptyRecords = (): Records => ({
   daily: { played: 0, streak: 0, bestStreak: 0, lastDate: null, history: {} },
@@ -20,8 +20,8 @@ export function normalizeRecords(p: Partial<Records> | null | undefined): Record
     daily: { ...base.daily, ...p?.daily },
     ten: { ...base.ten, ...p?.ten },
     hard: { ...base.hard, ...p?.hard },
-    timeTrial: { ...base.timeTrial, ...p.timeTrial },
-    inverse: { ...base.inverse, ...p.inverse },
+    timeTrial: { ...base.timeTrial, ...p?.timeTrial },
+    inverse: { ...base.inverse, ...p?.inverse },
     infinite: { ...base.infinite, ...p?.infinite },
     // Les dades guardades abans de la Col·lecció no tenen aquest camp
     unlockedTowns: Array.isArray(towns)

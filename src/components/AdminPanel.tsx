@@ -101,8 +101,24 @@ export default function AdminPanel({ onExit }: { onExit: () => void }) {
   }, []);
 
   useEffect(() => {
-    if (session) load();
-  }, [session, load]);
+    if (!session) return;
+    let alive = true;
+    api.admin
+      .listOpenProposals()
+      .then(({ rows: r, tallies: t }) => {
+        if (alive) {
+          setRows(r);
+          setTallies(t);
+          setError(null);
+        }
+      })
+      .catch((e) => {
+        if (alive) setError(e instanceof Error ? e.message : "Error desconegut");
+      });
+    return () => {
+      alive = false;
+    };
+  }, [session]);
 
   const login = async (e: React.FormEvent) => {
     e.preventDefault();

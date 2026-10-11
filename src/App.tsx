@@ -24,7 +24,7 @@ import AccountScreen from "./components/AccountScreen";
 import GroupsScreen from "./components/GroupsScreen";
 import RankingScreen from "./components/RankingScreen";
 import type { Session } from "./api/types";
-import { MODES as ALL_MODES, scoreOf } from "./modes";
+import { MODES as ALL_MODES, MODE_TITLES as TITLES, MODE_ICONS, scoreOf } from "./modes";
 import Icon, { type IconName } from "./components/Icon";
 
 // El mapa de municipis pesa ~125 KB: només es descarrega en obrir la Col·lecció
@@ -43,24 +43,6 @@ type Screen =
   | "account"
   | "ranking"
   | "groups";
-
-const TITLES: Record<Mode, string> = {
-  daily: "Repte diari",
-  ten: "Endivina 10",
-  infinite: "Mode infinit",
-  hard: "Mode difícil",
-  timeTrial: "Contrarellotge",
-  inverse: "Invers",
-};
-
-const MODE_ICONS: Record<Mode, IconName> = {
-  daily: "calendar",
-  ten: "target",
-  infinite: "infinity",
-  hard: "flame",
-  timeTrial: "timer",
-  inverse: "reverse",
-};
 
 interface ModeMeta {
   mode: Mode;
@@ -137,7 +119,10 @@ export default function App() {
       if (alive) setSession(s);
     });
     const off = api.auth.onChange((s) => {
-      if (alive) setSession(s);
+      if (alive) {
+        setSession(s);
+        if (!s) setRecords(loadRecords());
+      }
     });
     return () => {
       alive = false;
@@ -148,18 +133,21 @@ export default function App() {
   // Rècords: de la BD si hi ha sessió; del navegador si som convidats
   const userId = session?.id ?? null;
   useEffect(() => {
-    if (!userId) {
-      setRecords(loadRecords());
-      return;
-    }
+    if (!userId) return;
     let alive = true;
-    setSyncing(true);
     (async () => {
+      setSyncing(true);
       try {
         const cloud = await api.records.load();
         if (!alive) return;
         if (cloud) {
-          setRecords(normalizeRecords(cloud));
+          const norm = normalizeRecords(cloud);
+          setRecords(norm);
+          saveRecords(norm);
+          for (const m of ALL_MODES) {
+            const val = scoreOf(norm, m);
+            if (val > 0) api.scores.submit(m, val).catch(() => {});
+          }
         } else {
           // Primera vegada: pugem els rècords que ja tenies com a convidat
           const local = loadRecords();
@@ -207,6 +195,9 @@ export default function App() {
     if (next === records) return;
     setRecords(next);
     saveRecords(next);
+    if (session) {
+      api.records.save(next).catch(() => {});
+    }
   };
 
   const finish = (res: GameResult) => {
@@ -216,11 +207,10 @@ export default function App() {
       : records;
     const { records: next, isBest } = recordResult(completed, mode, res);
     setRecords(next);
+    saveRecords(next);
     if (session) {
       api.records.save(next).catch(() => {});
       api.scores.submit(mode, scoreOf(next, mode)).catch(() => {});
-    } else {
-      saveRecords(next);
     }
     setResult(res);
     setIsBest(isBest);
@@ -340,7 +330,15 @@ export default function App() {
   }
 
   if (screen === "account") {
-    return <AccountScreen session={session} onExit={() => setScreen("menu")} />;
+    return (
+      <AccountScreen
+        session={session}
+        records={records}
+        onExit={() => setScreen("menu")}
+        onGoToRanking={() => setScreen("ranking")}
+        onGoToGroups={() => setScreen("groups")}
+      />
+    );
   }
   if (screen === "ranking") {
     return (

@@ -1,5 +1,6 @@
-import { MODES, MODE_TITLES } from "../modes";
+import { MODES, MODE_TITLES, MODE_ICONS } from "../modes";
 import type { Mode } from "../types";
+import Icon from "./Icon";
 
 export default function ModeTabs({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => void }) {
   return (
@@ -12,7 +13,10 @@ export default function ModeTabs({ mode, onChange }: { mode: Mode; onChange: (m:
           className={m === mode ? "" : "ghost"}
           onClick={() => onChange(m)}
         >
-          {MODE_TITLES[m]}
+          <span className="tabs-modes">
+            <Icon name={MODE_ICONS[m]} size={21} />
+            {MODE_TITLES[m]}
+          </span>
         </button>
       ))}
     </div>

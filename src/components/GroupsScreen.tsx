@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
 import type { GroupInfo, GroupRankRow, Session } from "../api/types";
-import { MODE_METRIC } from "../modes";
+import { formatScoreValue, MODE_METRIC } from "../modes";
 import type { Mode } from "../types";
 import ModeTabs from "./ModeTabs";
 
@@ -35,8 +35,20 @@ export default function GroupsScreen({
   }, []);
 
   useEffect(() => {
-    if (session) refresh();
-  }, [session, refresh]);
+    if (!session) return;
+    let alive = true;
+    api.groups
+      .list()
+      .then((g) => {
+        if (alive) setGroups(g);
+      })
+      .catch((e) => {
+        if (alive) setError(errMsg(e));
+      });
+    return () => {
+      alive = false;
+    };
+  }, [session]);
 
   const open = async (g: GroupInfo) => {
     setSelected(g);
@@ -141,7 +153,7 @@ export default function GroupsScreen({
             <li key={r.username} className={r.isMe ? "me" : ""}>
               <span className="pos">#{r.rank}</span>
               <span className="name">{r.username}{r.isMe && " (tu)"}</span>
-              <span className="val">{r.value}</span>
+              <span className="val">{formatScoreValue(mode, r.value)}</span>
             </li>
           ))}
         </ol>

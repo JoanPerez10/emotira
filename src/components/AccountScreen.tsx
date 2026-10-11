@@ -1,15 +1,25 @@
 import { useState } from "react";
 import { api } from "../api";
 import type { Session } from "../api/types";
+import type { Records } from "../types";
+import { currentStreak } from "../utils/storage";
+import { formatScoreValue } from "../modes";
+import Icon from "./Icon";
 
 const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/;
 
 export default function AccountScreen({
   session,
+  records,
   onExit,
+  onGoToRanking,
+  onGoToGroups,
 }: {
   session: Session | null;
+  records: Records;
   onExit: () => void;
+  onGoToRanking?: () => void;
+  onGoToGroups?: () => void;
 }) {
   const [tab, setTab] = useState<"login" | "signup">("login");
   const [username, setUsername] = useState("");
@@ -76,16 +86,70 @@ export default function AccountScreen({
   };
 
   if (session) {
+    const streak = currentStreak(records);
+    const found = records.unlockedTowns.length;
     return (
       <main className="app">
         {header}
-        <p className="big">👤 {session.username}</p>
-        <p>{session.email}</p>
-        <p className="help">Els teus rècords es guarden al compte i surts als rànquings.</p>
+        <div className="card">
+          <p className="big">👤 {session.username}</p>
+          <p className="progress">{session.email}</p>
+          {session.isAdmin && <p className="chip chip-fire">Administrador</p>}
+          <p className="help">Els teus rècords es guarden al compte i surts als rànquings.</p>
+        </div>
+
+        <section className="card">
+          <h3>🏆 Rècords del jugador</h3>
+          <div className="chips">
+            <span className="chip chip-fire">Ratxa: {streak} {streak === 1 ? "dia" : "dies"}</span>
+            <span className="chip chip-map">{found} {found === 1 ? "poble" : "pobles"} trobats</span>
+          </div>
+
+          <ul className="account-stats-list">
+            <li>
+              <span><Icon name="calendar" size={16} /> Repte diari:</span>
+              <b>{records.daily.bestStreak} dies de ratxa</b>
+            </li>
+            <li>
+              <span><Icon name="target" size={16} /> Endivina 10:</span>
+              <b>{formatScoreValue("ten", records.ten.best)}</b>
+            </li>
+            <li>
+              <span><Icon name="flame" size={16} /> Mode difícil:</span>
+              <b>{formatScoreValue("hard", records.hard.best)}</b>
+            </li>
+            <li>
+              <span><Icon name="infinity" size={16} /> Mode infinit:</span>
+              <b>{formatScoreValue("infinite", records.infinite.bestStreak)}</b>
+            </li>
+            <li>
+              <span><Icon name="timer" size={16} /> Contrarellotge:</span>
+              <b>{formatScoreValue("timeTrial", records.timeTrial.best)}</b>
+            </li>
+            <li>
+              <span><Icon name="reverse" size={16} /> Invers:</span>
+              <b>{formatScoreValue("inverse", records.inverse.best)}</b>
+            </li>
+          </ul>
+
+          <div className="actions">
+            {onGoToRanking && (
+              <button onClick={onGoToRanking}>
+                <Icon name="trophy" size={18} /> Veure el rànquing
+              </button>
+            )}
+            {onGoToGroups && (
+              <button className="secondary" onClick={onGoToGroups}>
+                👥 Els meus grups
+              </button>
+            )}
+          </div>
+        </section>
+
         {error && <p className="error" role="alert">{error}</p>}
         <div className="actions">
           <button className="secondary" onClick={() => api.auth.signOut()}>Sortir</button>
-          <button className="ghost" onClick={removeAccount}>Esborrar el compte</button>
+          <button className="ghost danger-text" onClick={removeAccount}>Esborrar el compte</button>
         </div>
       </main>
     );
@@ -95,6 +159,16 @@ export default function AccountScreen({
     <main className="app">
       {header}
       <p>Pots seguir jugant com a convidat. Amb un compte, els rècords es guarden i surts als rànquings i als grups.</p>
+      {records.unlockedTowns.length > 0 && (
+        <div className="card">
+          <p className="help">
+            🎮 <b>Progrés en aquest dispositiu:</b> {records.unlockedTowns.length} {records.unlockedTowns.length === 1 ? "poble descobert" : "pobles descoberts"}
+            {records.timeTrial.best > 0 && ` · Contrarellotge: ${records.timeTrial.best} pobles`}
+            {records.inverse.best > 0 && ` · Invers: ${records.inverse.best}/30`}
+          </p>
+          <p className="help">En crear un compte o entrar, es guardaran automàticament i sortiràs als rànquings!</p>
+        </div>
+      )}
       {api.loginHint && <p className="help">🧪 {api.loginHint}</p>}
 
       <div className="tabs" role="tablist">

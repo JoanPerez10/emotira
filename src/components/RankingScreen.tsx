@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState } from "react";
 import { api } from "../api";
 import type { LeaderRow, Session } from "../api/types";
-import { MODE_METRIC } from "../modes";
+import { formatScoreValue, MODE_METRIC } from "../modes";
 import type { Mode } from "../types";
 import ModeTabs from "./ModeTabs";
 
@@ -16,17 +16,18 @@ export default function RankingScreen({
 }) {
   const [mode, setMode] = useState<Mode>("ten");
   const [rows, setRows] = useState<LeaderRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(api.enabled);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!api.enabled) {
-      setLoading(false);
-      return;
-    }
-    let alive = true;
+  const selectMode = (m: Mode) => {
+    setMode(m);
     setLoading(true);
     setError(null);
+  };
+
+  useEffect(() => {
+    if (!api.enabled) return;
+    let alive = true;
     api.scores
       .leaderboard(mode)
       .then((r) => {
@@ -50,7 +51,7 @@ export default function RankingScreen({
         <strong>🏅 Rànquing</strong>
       </div>
 
-      <ModeTabs mode={mode} onChange={setMode} />
+      <ModeTabs mode={mode} onChange={selectMode} />
       <p className="progress">{MODE_METRIC[mode]}</p>
 
       {loading && <p>Carregant…</p>}
@@ -64,7 +65,7 @@ export default function RankingScreen({
             <li className={r.isMe ? "me" : ""}>
               <span className="pos">#{r.rank}</span>
               <span className="name">{r.username}{r.isMe && " (tu)"}</span>
-              <span className="val">{r.value}</span>
+              <span className="val">{formatScoreValue(mode, r.value)}</span>
             </li>
           </Fragment>
         ))}

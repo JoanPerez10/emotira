@@ -8,8 +8,8 @@ import {
 import type { Api, GroupInfo, GroupRankRow, Proposal, Session, Tally } from "./types";
 import { votedStorageKey, voterId } from "./voter";
 
-const DB_KEY = "pobles-emoji:mock-db:v2";
-const SESSION_KEY = "pobles-emoji:mock-session";
+const DB_KEY = "emotira:mock-db:v3";
+const SESSION_KEY = "emotira:mock-session";
 const LATENCY_MS = 250; // simula la xarxa
 const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/;
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -271,7 +271,7 @@ export const mockApi: Api = {
     async submit(mode, value) {
       await delay();
       const u = requireUser();
-      const max = mode === "ten" || mode === "hard" ? 30 : 10000;
+      const max = mode === "ten" || mode === "hard" || mode === "inverse" ? 30 : 10000;
       if (!MODES.includes(mode) || value < 0 || value > max) throw new Error("Puntuació no vàlida.");
       const cur = db.scores.find((s) => s.user_id === u.id && s.mode === mode);
       if (!cur) {
