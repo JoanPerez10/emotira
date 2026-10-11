@@ -47,7 +47,7 @@ export default function RankingScreen({
   return (
     <main className="app">
       <div className="topbar">
-        <button className="ghost" onClick={onExit}>← Menú</button>
+        <button className="back" onClick={onExit}>← Menú</button>
         <strong>🏅 Rànquing</strong>
       </div>
 
