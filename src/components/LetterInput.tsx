@@ -1,4 +1,4 @@
-import { useEffect, useImperativeHandle, useReducer, useRef } from "react";
+import { useEffect, useId, useImperativeHandle, useReducer, useRef } from "react";
 import type { Ref } from "react";
 
 /** Només es permeten lletres i dígits: és el que accepta `normalize()` en resoldre. */
@@ -13,12 +13,13 @@ export interface Reveal {
 interface State {
   value: string;
   caret: number;
-  /** Nombre de tecles. No canvia durant la vida del component: el pare
-      torna a muntar-lo amb `key` quan arriba un poble nou. */
+  /** Nombre de tecles: s'actualitza en reiniciar el camp amb un poble nou. */
   length: number;
+  resetKey?: string | number;
 }
 
 type Action =
+  | { type: "reset"; length: number; key?: string | number }
   | { type: "replace"; text: string }   // escriptura directa o enganxat
   | { type: "insert"; text: string }    // tecles del teclat en pantalla
   | { type: "backspace" }
@@ -33,6 +34,8 @@ type Action =
 function reducer(s: State, a: Action): State {
   const at = Math.max(0, Math.min(s.caret, s.value.length));
   switch (a.type) {
+    case "reset":
+      return { value: "", caret: 0, length: a.length, resetKey: a.key };
     case "replace": {
       const value = a.text.replace(INVALID, "").slice(0, s.length);
       return { ...s, value, caret: Math.min(at, value.length) };
@@ -76,6 +79,10 @@ interface Props {
   reveal?: Reveal | null;
   /** Canvia el valor per tornar a disparar l'animació d'error. */
   shakeKey?: number;
+  /** Activa el focus natiu per toc al contrarellotge. */
+  nativeTapFocus?: boolean;
+  /** Buida el camp sense desmuntar-lo ni perdre el teclat del mòbil. */
+  resetKey?: string | number;
   label?: string;
   ref?: Ref<LetterInputHandle>;
 }
@@ -92,12 +99,18 @@ export default function LetterInput({
   onInput,
   reveal = null,
   shakeKey = 0,
+  nativeTapFocus = false,
+  resetKey,
   label = "Escriu el nom del poble, lletra per lletra",
   ref,
 }: Props) {
   const length = words.reduce((a, w) => a + w.length, 0);
-  const [state, dispatch] = useReducer(reducer, { value: "", caret: 0, length });
+  const [state, dispatch] = useReducer(reducer, { value: "", caret: 0, length, resetKey });
+  if (state.resetKey !== resetKey) {
+    dispatch({ type: "reset", length, key: resetKey });
+  }
   const inputRef = useRef<HTMLInputElement>(null);
+  const inputId = useId();
   const tileRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const locked = reveal !== null;
   const { value, caret } = state;
@@ -170,6 +183,7 @@ export default function LetterInput({
     return start + w.length;
   }, 0);
 
+  const Tile = nativeTapFocus ? "label" : "span";
   const tiles = Array.from({ length }, (_, i) => {
     const shown = locked ? (reveal.text[i] ?? "") : (value[i] ?? "");
     let cls = "tile";
@@ -177,22 +191,34 @@ export default function LetterInput({
     if (!locked && i === caret) cls += " active";
     if (aposAt.has(i)) cls += " apos";
     return (
-      <span
+      <Tile
         key={i}
+        htmlFor={nativeTapFocus && !locked ? inputId : undefined}
         ref={(el) => {
           tileRefs.current[i] = el;
         }}
         className={cls}
         aria-hidden="true"
         onPointerDown={(e) => {
-          if (locked) return;
+          if (locked || nativeTapFocus) return;
           e.preventDefault();
           dispatch({ type: "caret", at: i });
           inputRef.current?.focus();
         }}
+        onClick={() => {
+          if (locked || !nativeTapFocus) return;
+          dispatch({ type: "caret", at: i });
+          const input = inputRef.current;
+          // En tancar el teclat manualment, el mòbil pot conservar el focus.
+          // Renova'l dins del toc perquè el navegador torni a obrir el teclat.
+          if (input && document.activeElement === input) input.blur();
+          input?.focus({ preventScroll: true });
+          const at = Math.min(i, value.length);
+          input?.setSelectionRange(at, at);
+        }}
       >
         {shown}
-      </span>
+      </Tile>
     );
   });
 
@@ -218,9 +244,11 @@ export default function LetterInput({
           que llegeix el lector de pantalla. Les tecles de dalt són decoració. */}
       <input
         ref={inputRef}
+        id={inputId}
         className="letters-native"
-        value={locked ? "" : value}
+        value={locked && !nativeTapFocus ? "" : value}
         onChange={(e) => {
+          if (locked) return;
           dispatch({ type: "replace", text: e.target.value });
           onInput?.();
         }}
@@ -234,7 +262,8 @@ export default function LetterInput({
         autoCorrect="off"
         autoCapitalize="characters"
         spellCheck={false}
-        disabled={locked}
+        disabled={locked && !nativeTapFocus}
+        aria-readonly={locked && nativeTapFocus ? true : undefined}
         aria-label={label}
       />
 
