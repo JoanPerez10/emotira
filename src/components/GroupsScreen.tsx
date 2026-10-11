@@ -114,7 +114,7 @@ export default function GroupsScreen({
 
   const header = (
     <div className="topbar">
-      <button className="ghost" onClick={selected ? () => setSelected(null) : onExit}>
+      <button className="back" onClick={selected ? () => setSelected(null) : onExit}>
         ← {selected ? "Els meus grups" : "Menú"}
       </button>
       <strong>👥 Grups</strong>

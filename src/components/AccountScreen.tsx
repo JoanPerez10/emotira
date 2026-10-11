@@ -31,7 +31,7 @@ export default function AccountScreen({
 
   const header = (
     <div className="topbar">
-      <button className="ghost" onClick={onExit}>← Menú</button>
+      <button className="back" onClick={onExit}>← Menú</button>
       <strong>👤 Compte</strong>
     </div>
   );

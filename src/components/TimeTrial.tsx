@@ -18,7 +18,7 @@ interface Props {
 export function TimeTrialRules({ onPlay, onExit }: { onPlay: () => void; onExit: () => void }) {
   return (
     <main className="app">
-      <div className="topbar"><button className="back" onClick={onExit}>← Menú</button><strong>Contrarellotge</strong></div>
+      <div className="topbar"><button className="back" onClick={onExit}>← Menú</button><strong className="topbar-title"><Icon name="timer" size={18} /> Contrarellotge</strong></div>
       <section className="trial-rules card">
         <img className="trial-fox trial-fox-rules" src="/assets/contrarellotge-guineu.png" alt="" width={1254} height={1254} draggable={false} />
         <h1>Contra el rellotge!</h1>
