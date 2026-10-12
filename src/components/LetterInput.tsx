@@ -20,7 +20,7 @@ interface State {
 
 type Action =
   | { type: "reset"; length: number; key?: string | number }
-  | { type: "replace"; text: string }   // escriptura directa o enganxat
+  | { type: "replace"; text: string; at: number }   // escriptura directa o enganxat
   | { type: "insert"; text: string }    // tecles del teclat en pantalla
   | { type: "backspace" }
   | { type: "delete" }
@@ -38,7 +38,8 @@ function reducer(s: State, a: Action): State {
       return { value: "", caret: 0, length: a.length, resetKey: a.key };
     case "replace": {
       const value = a.text.replace(INVALID, "").slice(0, s.length);
-      return { ...s, value, caret: Math.min(at, value.length) };
+      const kept = a.text.slice(0, Math.max(0, a.at)).replace(INVALID, "").length;
+      return { ...s, value, caret: Math.min(kept, value.length) };
     }
     case "insert": {
       const room = s.length - s.value.length;
@@ -56,7 +57,7 @@ function reducer(s: State, a: Action): State {
         ? s
         : { ...s, value: s.value.slice(0, at) + s.value.slice(at + 1), caret: at };
     case "caret":
-      return { ...s, caret: at };
+      return { ...s, caret: Math.max(0, Math.min(a.at, s.value.length)) };
   }
 }
 
@@ -133,28 +134,30 @@ export default function LetterInput({
       case "Backspace":
         e.preventDefault();
         dispatch({ type: "backspace" });
+        moveCaret(caret > 0 ? caret - 1 : 0);
         onInput?.();
         return;
       case "Delete":
         e.preventDefault();
         dispatch({ type: "delete" });
+        moveCaret(caret);
         onInput?.();
         return;
       case "ArrowLeft":
         e.preventDefault();
-        dispatch({ type: "caret", at: caret - 1 });
+        moveCaret(caret - 1);
         return;
       case "ArrowRight":
         e.preventDefault();
-        dispatch({ type: "caret", at: caret + 1 });
+        moveCaret(caret + 1);
         return;
       case "Home":
         e.preventDefault();
-        dispatch({ type: "caret", at: 0 });
+        moveCaret(0);
         return;
       case "End":
         e.preventDefault();
-        dispatch({ type: "caret", at: value.length });
+        moveCaret(value.length);
         return;
       case "Enter":
         e.preventDefault();
@@ -184,6 +187,14 @@ export default function LetterInput({
   }, 0);
 
   const Tile = nativeTapFocus ? "label" : "span";
+
+  const moveCaret = (at: number) => {
+    const next = Math.max(0, Math.min(at, value.length));
+    dispatch({ type: "caret", at: next });
+    const input = inputRef.current;
+    if (input && input.selectionStart !== next) input.setSelectionRange(next, next);
+  };
+
   const tiles = Array.from({ length }, (_, i) => {
     const shown = locked ? (reveal.text[i] ?? "") : (value[i] ?? "");
     let cls = "tile";
@@ -202,19 +213,17 @@ export default function LetterInput({
         onPointerDown={(e) => {
           if (locked || nativeTapFocus) return;
           e.preventDefault();
-          dispatch({ type: "caret", at: i });
+          moveCaret(i);
           inputRef.current?.focus();
         }}
         onClick={() => {
           if (locked || !nativeTapFocus) return;
-          dispatch({ type: "caret", at: i });
           const input = inputRef.current;
           // En tancar el teclat manualment, el mòbil pot conservar el focus.
           // Renova'l dins del toc perquè el navegador torni a obrir el teclat.
           if (input && document.activeElement === input) input.blur();
           input?.focus({ preventScroll: true });
-          const at = Math.min(i, value.length);
-          input?.setSelectionRange(at, at);
+          moveCaret(i);
         }}
       >
         {shown}
@@ -249,7 +258,7 @@ export default function LetterInput({
         value={locked && !nativeTapFocus ? "" : value}
         onChange={(e) => {
           if (locked) return;
-          dispatch({ type: "replace", text: e.target.value });
+          dispatch({ type: "replace", text: e.target.value, at: e.target.selectionStart ?? e.target.value.length });
           onInput?.();
         }}
         onKeyDown={onKeyDown}
