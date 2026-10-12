@@ -58,6 +58,10 @@
   --line:    #e7ded0;
   --text:    #1f2933;   /* 13.77:1 sobre --bg */
   --muted:   #5b6470;   /* 5.60:1 sobre --bg */
+  --placeholder: #8a8578;
+
+  --glow-ring: 0 0 0 3px rgba(24, 87, 199, 0.25);
+  --glow-ring-wide: 0 0 0 6px rgba(24, 87, 199, 0.12);
 
   /* ── focus (WCAG 2.4.11 / 2.4.13) ─────────────────────── */
   --focus:      #0b3d91;
@@ -186,13 +190,12 @@ p { line-height: 1.5; }
   padding: 0.5rem 0.75rem;
 }
 .best, .streak { color: var(--blue-ink); font-weight: 800; }
-.best, .streak, .stats h3 {
+.best, .streak {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
 }
-.stats h3 { justify-content: flex-start; }
 .best svg, .streak svg, .stats h3 svg { flex: 0 0 auto; }
 .help { color: var(--muted); font-size: 0.9rem; margin: 0.3rem 0 0; }
 
@@ -286,7 +289,7 @@ input, select {
   border-radius: var(--r-md);
   box-shadow: var(--shadow-sm);
 }
-input::placeholder { color: #8a8578; font-weight: 500; }
+input::placeholder { color: var(--placeholder); font-weight: 500; }
 input:hover, select:hover { border-color: #d5c9ae; }
 input:focus, select:focus { border-color: var(--green); }
 input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
@@ -406,7 +409,7 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
 }
 .tile.active {
   border-color: var(--blue-deep);
-  box-shadow: 0 0 0 3px rgba(24, 87, 199, 0.25);
+  box-shadow: var(--glow-ring);
   animation: tilePulse 1.6s ease-in-out infinite;
 }
 .tile.ok {
@@ -438,8 +441,8 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   75% { transform: translateX(5px); }
 }
 @keyframes tilePulse {
-  0%, 100% { box-shadow: 0 0 0 3px rgba(24, 87, 199, 0.25); }
-  50%      { box-shadow: 0 0 0 6px rgba(24, 87, 199, 0.12); }
+  0%, 100% { box-shadow: var(--glow-ring); }
+  50%      { box-shadow: var(--glow-ring-wide); }
 }
 
 /* ============================================================
@@ -1035,7 +1038,13 @@ button.chip:active:not(:disabled) {
 .coll-credit { margin-top: 1.5rem; text-align: center; }
 
 /* ── Rècords ────────────────────────────────────────────── */
-.stats h3 { display: flex; align-items: center; gap: 0.4rem; color: var(--green-ink); }
+.stats h3 {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.4rem;
+  color: var(--green-ink);
+}
 .stats p { margin: 0.3rem 0; font-weight: 600; }
 
 /* Títol de la barra superior: icona + text, sempre junts. */
@@ -1101,7 +1110,7 @@ button.chip:active:not(:disabled) {
   background: transparent !important;
   color: var(--text);
 }
-.emoji-input-field::placeholder { font-size: 1.05rem; letter-spacing: normal; color: #8a8578; }
+.emoji-input-field::placeholder { font-size: 1.05rem; letter-spacing: normal; color: var(--placeholder); }
 .emoji-input-actions { display: flex; align-items: center; gap: 0.25rem; flex-shrink: 0; }
 .emoji-action-btn {
   background: transparent;
