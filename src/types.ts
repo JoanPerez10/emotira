@@ -1,4 +1,4 @@
-export type Mode = "daily" | "ten" | "hard" | "infinite" | "timeTrial" | "inverse";
+export type Mode = "daily" | "ten" | "hard" | "infinite" | "timeTrial" | "inverse" | "music";
 
 export interface PuzzleResult {
   status: "correct" | "revealed";
@@ -26,6 +26,7 @@ export interface Records {
   hard: { played: number; best: number };
   timeTrial: { played: number; best: number };
   inverse: { played: number; best: number };
+  music: { played: number; best: number };
   infinite: { played: number; bestSolved: number; bestStreak: number };
   /** Respostes (`puzzle.answer`) de tots els pobles encertats, en qualsevol mode. Sense duplicats. */
   unlockedTowns: string[];

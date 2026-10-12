@@ -16,7 +16,8 @@ export type IconName =
   | "lightbulb"
   | "share"
   | "check"
-  | "plus";
+  | "plus"
+  | "music";
 
 interface Props {
   name: IconName;
@@ -78,6 +79,13 @@ const PATHS: Record<IconName, React.ReactNode> = {
   ),
   check: <path d="M4.5 12.5 9.5 17.5 19.5 6.5" />,
   plus: <path d="M12 5v14M5 12h14" />,
+  music: (
+    <>
+      <path d="M9 18V5l12-2v13" />
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="18" cy="16" r="3" />
+    </>
+  ),
 };
 
 export default function Icon({ name, size = 22, className }: Props) {

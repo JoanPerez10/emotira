@@ -2,7 +2,7 @@ export interface Puzzle {
     emojis: string;
     answer: string;
     aliases?: string[];   // formes alternatives acceptades
-    comarca: string;      // per a la pista
+    comarca?: string | null; // per a la pista
     explanation: string;  // "Mart + orella"
   }
   
