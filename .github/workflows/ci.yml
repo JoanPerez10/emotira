@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  ci:
+    name: Lint, Test & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del codi
+        uses: actions/checkout@v4
+
+      - name: Configuració de Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Instal·lació de dependències
+        run: npm ci
+
+      - name: Comprovació de linter
+        run: npm run lint
+
+      - name: Execució de tests
+        run: npm test
+
+      - name: Verificació de build
+        run: npm run build
