@@ -235,6 +235,146 @@ describe('Game component', () => {
     expect(screen.getByText(/Aquest era el nom:/i)).toBeInTheDocument()
   })
 
+  it('en mode difícil les vides són globals durant la partida i no es reinicien entre preguntes', () => {
+    const mockThreePuzzles: Puzzle[] = [
+      { answer: 'Vic', emojis: '🏛️🐮', explanation: 'Capital d\'Osona', comarca: 'Osona' },
+      { answer: 'Ripoll', emojis: '🐑🌲', explanation: 'Bressol de Catalunya', comarca: 'Ripollès' },
+      { answer: 'Olot', emojis: '🌋🌳', explanation: 'Volcans', comarca: 'Garrotxa' },
+    ]
+    const handleFinish = vi.fn()
+
+    render(
+      <Game
+        title="Mode difícil"
+        icon="flame"
+        deck={mockThreePuzzles}
+        pool={mockThreePuzzles}
+        hard={true}
+        onExit={vi.fn()}
+        onFinish={handleFinish}
+      />
+    )
+
+    // Comença amb 3 vides
+    expect(screen.getByLabelText(/Intents restants: 3/i)).toBeInTheDocument()
+
+    // Poble 1 (Vic): 1 error -> queden 2 vides
+    const input1 = screen.getByLabelText(/Escriu el nom del poble/i)
+    fireEvent.change(input1, { target: { value: 'AAA' } })
+    fireEvent.keyDown(input1, { key: 'Enter' })
+    expect(screen.getByLabelText(/Intents restants: 2/i)).toBeInTheDocument()
+
+    // Encerta Vic
+    const inputVic = screen.getByLabelText(/Escriu el nom del poble/i)
+    fireEvent.change(inputVic, { target: { value: 'VIC' } })
+    fireEvent.keyDown(inputVic, { key: 'Enter' })
+    expect(screen.getByText(/Ho has encertat!/i)).toBeInTheDocument()
+
+    // Avança al poble 2
+    fireEvent.click(screen.getByRole('button', { name: 'Poble següent' }))
+
+    // Al poble 2 (Ripoll), les vides NO s'han de reiniciar: han de continuar sent 2!
+    expect(screen.getByLabelText(/Intents restants: 2/i)).toBeInTheDocument()
+
+    // Poble 2: 1 error -> queden 1 vida
+    const input2 = screen.getByLabelText(/Escriu el nom del poble/i)
+    fireEvent.change(input2, { target: { value: 'BBB' } })
+    fireEvent.keyDown(input2, { key: 'Enter' })
+    expect(screen.getByLabelText(/Intents restants: 1/i)).toBeInTheDocument()
+
+    // Encerta Ripoll a la segona (1 error en aquest poble -> 2 punts)
+    const inputRipoll = screen.getByLabelText(/Escriu el nom del poble/i)
+    fireEvent.change(inputRipoll, { target: { value: 'RIPOLL' } })
+    fireEvent.keyDown(inputRipoll, { key: 'Enter' })
+    expect(screen.getByText(/Ho has encertat!/i)).toBeInTheDocument()
+
+    // Avança al poble 3
+    fireEvent.click(screen.getByRole('button', { name: 'Poble següent' }))
+
+    // Al poble 3 (Olot), continua tenint 1 vida!
+    expect(screen.getByLabelText(/Intents restants: 1/i)).toBeInTheDocument()
+
+    // Poble 3: 1 error -> s'esgota l'última vida (0 restants)
+    const input3 = screen.getByLabelText(/Escriu el nom del poble/i)
+    fireEvent.change(input3, { target: { value: 'CCC' } })
+    fireEvent.keyDown(input3, { key: 'Enter' })
+
+    // Es revela la resposta i, en esgotar les vides globals, s'ofereix veure el resultat
+    expect(screen.getByText(/Aquest era el nom:/i)).toBeInTheDocument()
+    const finishBtn = screen.getByRole('button', { name: 'Veure el resultat' })
+    expect(finishBtn).toBeInTheDocument()
+
+    fireEvent.click(finishBtn)
+    expect(handleFinish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        score: 4, // 2 punts (Vic) + 2 punts (Ripoll) + 0 punts (Olot)
+        results: [
+          { status: 'correct', hints: 1 },
+          { status: 'correct', hints: 1 },
+          { status: 'revealed', hints: 1 },
+        ],
+      })
+    )
+  })
+
+  it('en mode difícil rendir-se resta una vida i esgotar les vides acaba la partida', () => {
+    const mockTwoPuzzles: Puzzle[] = [
+      { answer: 'Vic', emojis: '🏛️🐮', explanation: 'Capital d\'Osona', comarca: 'Osona' },
+      { answer: 'Ripoll', emojis: '🐑🌲', explanation: 'Bressol de Catalunya', comarca: 'Ripollès' },
+    ]
+    const handleFinish = vi.fn()
+
+    render(
+      <Game
+        title="Mode difícil"
+        icon="flame"
+        deck={mockTwoPuzzles}
+        pool={mockTwoPuzzles}
+        hard={true}
+        onExit={vi.fn()}
+        onFinish={handleFinish}
+      />
+    )
+
+    expect(screen.getByLabelText(/Intents restants: 3/i)).toBeInTheDocument()
+
+    // Clica "Em rendeixo" al 1r poble
+    fireEvent.click(screen.getByRole('button', { name: 'Em rendeixo' }))
+
+    // Resta una vida (queden 2) i revela la resposta
+    expect(screen.getByLabelText(/Intents restants: 2/i)).toBeInTheDocument()
+    expect(screen.getByText(/Aquest era el nom:/i)).toBeInTheDocument()
+
+    // Passa al 2n poble
+    fireEvent.click(screen.getByRole('button', { name: 'Poble següent' }))
+    expect(screen.getByLabelText(/Intents restants: 2/i)).toBeInTheDocument()
+
+    // 1r error al 2n poble -> queda 1 vida
+    const input = screen.getByLabelText(/Escriu el nom del poble/i)
+    fireEvent.change(input, { target: { value: 'AAA' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    expect(screen.getByLabelText(/Intents restants: 1/i)).toBeInTheDocument()
+
+    // Ara es rendeix tenint només 1 vida restant -> perd l'última vida (0 restants)
+    fireEvent.click(screen.getByRole('button', { name: 'Em rendeixo' }))
+    expect(screen.getByText(/Aquest era el nom:/i)).toBeInTheDocument()
+
+    // El botó ofereix veure el resultat perquè ha perdut totes les vides
+    const finishBtn = screen.getByRole('button', { name: 'Veure el resultat' })
+    expect(finishBtn).toBeInTheDocument()
+    fireEvent.click(finishBtn)
+
+    expect(handleFinish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        score: 0,
+        results: [
+          { status: 'revealed', hints: 1 },
+          { status: 'revealed', hints: 2 },
+        ],
+      })
+    )
+  })
+
   it('gestiona la modalitat de Música amb textos específics', () => {
     render(
       <Game

@@ -39,11 +39,16 @@ usa la paleta de marca blau/taronja.
 npm install
 npm run dev        # servidor de desenvolupament
 npm run dev:mock   # amb dades simulades, sense Supabase
+npm test           # executa els tests (s'han de fer tests sempre)
 npm run build      # compila TypeScript + bundle de producció
 npm run preview    # serveix el build
 npm run lint       # ESLint
 npm run build:map  # regenera les dades del mapa
 ```
+
+## Proves
+
+S'han de fer tests sempre davant de qualsevol canvi o nova funcionalitat (`npm test`).
 
 ## Estructura
 

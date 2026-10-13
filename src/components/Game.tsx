@@ -46,11 +46,13 @@ export default function Game({
   const [shakeKey, setShakeKey] = useState(0);
   const [hints, setHints] = useState(0);
   const [fails, setFails] = useState(0);
+  const [puzzleFails, setPuzzleFails] = useState(0);
   const nextRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<LetterInputHandle>(null);
 
   const puzzle = deck[index];
-  const isLast = !endless && index + 1 >= deck.length;
+  const isGameOver = hard && fails >= MAX_FAILS;
+  const isLast = (!endless && index + 1 >= deck.length) || isGameOver;
 
   const buildResult = (res: PuzzleResult[]): GameResult => ({
     score: res.reduce((s, r) => s + pointsFor(r), 0),
@@ -100,7 +102,7 @@ export default function Game({
     return lines.slice(0, hints);
   }, [puzzle, hints, title]);
 
-  const settle = (st: "correct" | "revealed", penalty = hard ? fails : hints) => {
+  const settle = (st: "correct" | "revealed", penalty = hard ? puzzleFails : hints) => {
     setStatus(st);
     setResults((r) => [...r, { status: st, hints: penalty }]);
   };
@@ -115,18 +117,32 @@ export default function Game({
       return;
     }
     if (hard) {
-      const f = fails + 1;
-      setFails(f);
+      const nextFails = fails + 1;
+      const nextPuzzleFails = puzzleFails + 1;
+      setFails(nextFails);
+      setPuzzleFails(nextPuzzleFails);
       setTyped(false);
-      if (f >= MAX_FAILS) {
+      if (nextFails >= MAX_FAILS) {
         setWrong(false);
-        settle("revealed", f);
+        settle("revealed", nextPuzzleFails);
         return;
       }
     } else {
       setShakeKey((k) => k + 1);
     }
     setWrong(true);
+  };
+
+  const giveUp = () => {
+    if (status !== "playing") return;
+    if (hard) {
+      const nextFails = fails + 1;
+      setFails(nextFails);
+      setWrong(false);
+      settle("revealed", puzzleFails + 1);
+    } else {
+      settle("revealed");
+    }
   };
 
   const next = () => {
@@ -144,7 +160,8 @@ export default function Game({
     setStatus("playing");
     setWrong(false);
     setHints(0);
-    setFails(0);
+    setPuzzleFails(0);
+    if (!hard) setFails(0);
   };
 
   const stopEndless = () =>
@@ -245,7 +262,7 @@ export default function Game({
                 {hints >= 3 ? "Ja ho saps tot" : `Pista (${hints}/3)`}
               </button>
             )}
-            <button type="button" className="ghost" onClick={() => settle("revealed")}>
+            <button type="button" className="ghost" onClick={giveUp}>
               Em rendeixo
             </button>
           </div>
