@@ -1,9 +1,10 @@
 import { Fragment, useEffect, useState } from "react";
 import { api } from "../api";
 import type { LeaderRow, Session } from "../api/types";
-import { formatScoreValue, MODE_METRIC } from "../modes";
+import { MODE_METRIC } from "../modes";
 import type { Mode } from "../types";
 import ModeTabs from "./ModeTabs";
+import LeaderRowItem from "./LeaderRowItem";
 
 export default function RankingScreen({
   session,
@@ -62,11 +63,7 @@ export default function RankingScreen({
         {rows.map((r, i) => (
           <Fragment key={`${r.rank}-${r.username}`}>
             {i === 5 && <li className="gap" aria-hidden="true">⋯</li>}
-            <li className={r.isMe ? "me" : ""}>
-              <span className="pos">#{r.rank}</span>
-              <span className="name">{r.username}{r.isMe && " (tu)"}</span>
-              <span className="val">{formatScoreValue(mode, r.value)}</span>
-            </li>
+            <LeaderRowItem row={r} mode={mode} />
           </Fragment>
         ))}
       </ol>

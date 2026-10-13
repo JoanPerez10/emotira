@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameResult, PuzzleResult } from "../types";
-import { normalize } from "../utils/normalize";
+import { calculateScore } from "../modes";
+import { normalize, isCorrectAnswer } from "../utils/normalize";
 import { shuffle } from "../utils/random";
 import type { Puzzle } from "../data/puzzles";
-import LetterInput, { type LetterInputHandle, type Word } from "./LetterInput";
+import { parseWords } from "../utils/words";
+import LetterInput, { type LetterInputHandle } from "./LetterInput";
 import Icon, { type IconName } from "./Icon";
 
 type Status = "playing" | "correct" | "revealed";
-
-const pointsFor = (r: PuzzleResult) =>
-  r.status === "correct" ? Math.max(1, 3 - r.hints) : 0;
 
 interface Props {
   title: string;
@@ -55,7 +54,7 @@ export default function Game({
   const isLast = (!endless && index + 1 >= deck.length) || isGameOver;
 
   const buildResult = (res: PuzzleResult[]): GameResult => ({
-    score: res.reduce((s, r) => s + pointsFor(r), 0),
+    score: calculateScore(res),
     max: endless ? res.length * 3 : initialDeck.length * 3,
     results: res,
   });
@@ -71,22 +70,7 @@ export default function Game({
   // «Platja d'Aro» sortien més caselles que lletres (per «Castell-Platja d'Aro»).
   // Les àlies més curtes («Pineda») es poden continuar escrivint.
   // Els apòstrofs no s'escriuen però es marquen entre tecles («L’Escala»).
-  const words = useMemo(
-    () =>
-      puzzle.answer
-        .split(/[\s-]+/)
-        .map((w): Word => {
-          let length = 0;
-          const apostrophes: number[] = [];
-          for (const ch of w) {
-            if (/['’]/.test(ch)) apostrophes.push(length);
-            else length += normalize(ch).length;
-          }
-          return { length, apostrophes: apostrophes.filter((p) => p > 0 && p < length) };
-        })
-        .filter((w) => w.length > 0),
-    [puzzle]
-  );
+  const words = useMemo(() => parseWords(puzzle.answer), [puzzle.answer]);
 
   const hintLines = useMemo(() => {
     const lines: string[] = [];
@@ -109,8 +93,7 @@ export default function Game({
 
   const submit = (text: string) => {
     if (status !== "playing" || !text.trim()) return;
-    const accepted = [puzzle.answer, ...(puzzle.aliases ?? [])].map(normalize);
-    if (accepted.includes(normalize(text))) {
+    if (isCorrectAnswer(text, puzzle)) {
       setWrong(false);
       settle("correct");
       onSolve?.(puzzle.answer);

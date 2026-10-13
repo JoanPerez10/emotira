@@ -5,7 +5,8 @@ import { normalize } from "../utils/normalize";
 import { shuffle } from "../utils/random";
 import { createTrial, trialReducer, TRIAL_ATTEMPTS, TRIAL_BONUS_STEPS, TRIAL_MAX_SECONDS, TRIAL_SECONDS } from "../utils/timeTrial";
 import Icon from "./Icon";
-import LetterInput, { type LetterInputHandle, type Word } from "./LetterInput";
+import { parseWords } from "../utils/words";
+import LetterInput, { type LetterInputHandle } from "./LetterInput";
 
 interface Props {
   deck: Puzzle[];
@@ -70,15 +71,7 @@ export default function TimeTrial({ deck, pool, onSolve, onFinish, onExit }: Pro
   }, [state.status, state.turn, pool]);
 
   if (!puzzle || state.status === "finished") return <main className="app"><p role="status">Temps esgotat!</p></main>;
-  const words: Word[] = puzzle.answer.split(/[\s-]+/).map((word) => {
-    let length = 0;
-    const apostrophes: number[] = [];
-    for (const char of word) {
-      if (/['’]/.test(char)) apostrophes.push(length);
-      else length += normalize(char).length;
-    }
-    return { length, apostrophes: apostrophes.filter((p) => p > 0 && p < length) };
-  }).filter((word) => word.length > 0);
+  const words = parseWords(puzzle.answer);
   const seconds = `${Math.floor(state.remaining / 60)}:${String(state.remaining % 60).padStart(2, "0")}`;
   const playing = state.status === "playing";
 

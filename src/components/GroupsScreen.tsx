@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
 import type { GroupInfo, GroupRankRow, Session } from "../api/types";
-import { formatScoreValue, MODE_METRIC } from "../modes";
+import { MODE_METRIC } from "../modes";
 import type { Mode } from "../types";
 import ModeTabs from "./ModeTabs";
+import LeaderRowItem from "./LeaderRowItem";
 
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : "Alguna cosa ha fallat.");
 
@@ -150,11 +151,7 @@ export default function GroupsScreen({
         {error && <p className="error" role="alert">{error}</p>}
         <ol className="ranking">
           {modeRows.map((r) => (
-            <li key={r.username} className={r.isMe ? "me" : ""}>
-              <span className="pos">#{r.rank}</span>
-              <span className="name">{r.username}{r.isMe && " (tu)"}</span>
-              <span className="val">{formatScoreValue(mode, r.value)}</span>
-            </li>
+            <LeaderRowItem key={r.username} row={r} mode={mode} />
           ))}
         </ol>
         <button className="ghost" onClick={leave}>Sortir del grup</button>

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { puzzles } from "../data/puzzles";
+import { splitGraphemes } from "../utils/graphemes";
 
 /**
  * Selector d'emojis propi, en lloc de `emoji-picker-react` (41 MB i desenes
@@ -327,7 +328,7 @@ const BASE_GROUPS: Group[] = [
 ];
 
 /** Divideix en grafemes: 👩‍⚕️ són tres punts de codi però un sol emoji. */
-const graphemes = (s: string) => [...new Intl.Segmenter().segment(s)].map((x) => x.segment);
+const graphemes = splitGraphemes;
 
 /** Compara sense el selector de variació (U+FE0F): «☀» i «☀️» són el mateix. */
 const bare = (e: string) => e.replace(/\uFE0F/g, "");

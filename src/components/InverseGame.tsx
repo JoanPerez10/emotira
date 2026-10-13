@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Puzzle } from "../data/puzzles";
 import type { GameResult, PuzzleResult } from "../types";
+import { calculateScore } from "../modes";
 import { eliminateDistractors, inverseOptions, splitEmojis } from "../utils/inverse";
 import Icon from "./Icon";
 
@@ -12,17 +13,15 @@ interface Props {
   onExit: () => void;
 }
 
-const pointsFor = (result: PuzzleResult) => result.status === "correct" ? Math.max(1, 3 - result.hints) : 0;
-
 export default function InverseGame({ deck, pool, onSolve, onFinish, onExit }: Props) {
   const [results, setResults] = useState<PuzzleResult[]>([]);
   const index = results.length;
-  const score = results.reduce((sum, result) => sum + pointsFor(result), 0);
+  const score = calculateScore(results);
 
   const complete = (result: PuzzleResult) => {
     const next = [...results, result];
     if (next.length >= deck.length) {
-      onFinish({ score: next.reduce((sum, r) => sum + pointsFor(r), 0), max: deck.length * 3, results: next });
+      onFinish({ score: calculateScore(next), max: deck.length * 3, results: next });
     } else {
       setResults(next);
     }
