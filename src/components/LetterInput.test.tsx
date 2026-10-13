@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import LetterInput, { type LetterInputHandle, type Word } from './LetterInput'
+import { parseWords } from '../utils/words'
 import { createRef } from 'react'
 
 describe('LetterInput component', () => {
@@ -225,5 +226,21 @@ describe('LetterInput component', () => {
 
     const tiles = container.querySelectorAll('.tile')
     fireEvent.click(tiles[1])
+  })
+
+  it('desglossa correctament les paraules amb parseWords', () => {
+    expect(parseWords('Vic')).toEqual([{ length: 3, apostrophes: [] }])
+    expect(parseWords('Sant Cugat')).toEqual([
+      { length: 4, apostrophes: [] },
+      { length: 5, apostrophes: [] },
+    ])
+    expect(parseWords('Castell-Platja d’Aro')).toEqual([
+      { length: 7, apostrophes: [] },
+      { length: 6, apostrophes: [] },
+      { length: 4, apostrophes: [1] },
+    ])
+    expect(parseWords('L’Escala')).toEqual([
+      { length: 7, apostrophes: [1] },
+    ])
   })
 })

@@ -1,6 +1,6 @@
 import type { Puzzle } from "../data/puzzles";
 import type { PuzzleResult } from "../types";
-import { normalize } from "./normalize";
+import { acceptedAnswers, normalize } from "./normalize";
 
 export const TRIAL_SECONDS = 120;
 export const TRIAL_MAX_SECONDS = 180;
@@ -57,7 +57,7 @@ export function trialReducer(state: TrialState, action: TrialAction): TrialState
   if (action.type === "submit") {
     const text = normalize(action.text);
     if (!text) return s;
-    const accepted = [puzzle.answer, ...(puzzle.aliases ?? [])].map(normalize);
+    const accepted = acceptedAnswers(puzzle);
     // Un enviament parcial no és un intent; els àlies curts continuen sent vàlids.
     if (!accepted.includes(text) && !accepted.some((answer) => answer.length === text.length)) return s;
     if (accepted.includes(text)) {

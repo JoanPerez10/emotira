@@ -26,8 +26,9 @@ import AccountScreen from "./components/AccountScreen";
 import GroupsScreen from "./components/GroupsScreen";
 import RankingScreen from "./components/RankingScreen";
 import type { Session } from "./api/types";
-import { MODES as ALL_MODES, MODE_TITLES as TITLES, MODE_ICONS, MODE_IMAGES, scoreOf } from "./modes";
-import Icon, { type IconName } from "./components/Icon";
+import { MODES as ALL_MODES, MODE_TITLES as TITLES, MODE_ICONS, MODE_IMAGES, scoreOf, starsFor, MENU_MODES } from "./modes";
+import { firstGrapheme } from "./utils/graphemes";
+import Icon from "./components/Icon";
 
 // El mapa de municipis pesa ~125 KB: només es descarrega en obrir la Col·lecció
 const Collection = lazy(() => import("./components/Collection"));
@@ -45,44 +46,6 @@ type Screen =
   | "account"
   | "ranking"
   | "groups";
-
-interface ModeMeta {
-  mode: Mode;
-  icon: IconName;
-  title: string;
-  sub: string;
-  /** Paleta de la targeta: fons suau, icona i vora en to de marca. */
-  variant: "blue" | "orange" | "coral" | "purple";
-  src?: string;
-}
-
-const MODES: ModeMeta[] = [
-  { mode: "inverse", icon: "reverse", title: "Invers", sub: "Del poble als emojis", variant: "blue", src: "/assets/invers-guineu.png" },
-  { mode: "timeTrial", icon: "timer", title: "Contrarellotge", sub: "2 minuts i bonus de temps", variant: "orange", src: "/assets/contrarellotge-guineu.png" },
-  { mode: "music", icon: "music", title: "Música", sub: "Grups dels Països Catalans", variant: "purple", src: "/assets/musica-guineu.png" },
-  { mode: "ten", icon: "target", title: "Endivina 10", sub: "10 pobles d'una tirada", variant: "blue", src: "/assets/endivina-deu-guineu.png" },
-  { mode: "hard", icon: "flame", title: "Mode difícil", sub: "Sense pistes i 3 intents", variant: "coral", src: "/assets/dificil-guineu.png" },
-  { mode: "infinite", icon: "infinity", title: "Mode infinit", sub: "Fins que et cansis", variant: "purple", src: "/assets/infinit-guineu.png" },
-];
-
-/** Converteix una puntuació en estrelles (0-3), com a Duolingo. */
-const starsFor = (score: number, max: number) => {
-  const pct = max > 0 ? score / max : 0;
-  return pct >= 0.9 ? 3 : pct >= 0.6 ? 2 : pct >= 0.3 ? 1 : 0;
-};
-
-/**
- * Primer emoji d'una pista, sencer. Cal segmentar per grafemes: hi ha
- * seqüències ZWJ (👩‍🦰, 🏊‍♀️) que `slice(0, 1` partiria per la meitat.
- */
-const firstEmoji = (s: string) => {
-  if (typeof Intl !== "undefined" && "Segmenter" in Intl) {
-    const seg = new Intl.Segmenter(undefined, { granularity: "grapheme" });
-    const it = seg.segment(s)[Symbol.iterator]().next();
-    return it.done ? "" : it.value.segment;
-  }
-  return Array.from(s)[0] ?? "";
-};
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("menu");
@@ -520,7 +483,7 @@ export default function App() {
             <p className="daily-squares">
               {dailyPuzzles()
                 .slice(0, 5)
-                .map((p) => firstEmoji(p.emojis))
+                .map((p) => firstGrapheme(p.emojis))
                 .join("")}
             </p>
             <span className="daily-cta">Jugar ara</span>
@@ -529,7 +492,7 @@ export default function App() {
 
         {/* ── La resta, en graella de dues columnes ── */}
         <div className="grid">
-          {MODES.map(({ mode: m, icon, title, sub, variant, src }) => (
+          {MENU_MODES.map(({ mode: m, icon, title, sub, variant, src }) => (
             <button key={m} className={`mode-card v-${variant}`} onClick={() => start(m)}>
               <span className={`mode-icon${src ? " mode-icon-image" : ""}`}>
                 {src

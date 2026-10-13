@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { normalize } from './normalize'
+import { normalize, acceptedAnswers, isCorrectAnswer } from './normalize'
 
 describe('normalize', () => {
   it('converteix majúscules a minúscules', () => {
@@ -38,5 +38,18 @@ describe('normalize', () => {
   it('gestiona cadenes buides', () => {
     expect(normalize('')).toBe('')
     expect(normalize('   --- ')).toBe('')
+  })
+
+  it('extreu totes les respostes acceptades normalitzades amb acceptedAnswers', () => {
+    const puzzle = { answer: 'Vic', aliases: ['Vich', 'Sant Pere de Vic'] }
+    expect(acceptedAnswers(puzzle)).toEqual(['vic', 'vich', 'santperedevic'])
+  })
+
+  it('comprova si una resposta és correcta amb isCorrectAnswer', () => {
+    const puzzle = { answer: 'L’Escala', aliases: ['Escala'] }
+    expect(isCorrectAnswer('lescala', puzzle)).toBe(true)
+    expect(isCorrectAnswer('l\'escala', puzzle)).toBe(true)
+    expect(isCorrectAnswer('escala', puzzle)).toBe(true)
+    expect(isCorrectAnswer('figueres', puzzle)).toBe(false)
   })
 })

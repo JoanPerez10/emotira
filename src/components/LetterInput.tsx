@@ -61,13 +61,8 @@ function reducer(s: State, a: Action): State {
   }
 }
 
-/** Una paraula de la resposta, tal com es mostra en una fila de tecles. */
-export interface Word {
-  /** Lletres que s'escriuen (ja sense accents ni apòstrofs). */
-  length: number;
-  /** Posicions on hi ha un apòstrof: «d’Aro» → [1] (després de la D). */
-  apostrophes: number[];
-}
+import type { Word } from "../utils/words";
+export type { Word };
 
 interface Props {
   /** Cada paraula va en una fila; el total de lletres és el nombre de tecles. */

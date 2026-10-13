@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { COMARQUES } from "../data/comarques";
 import { puzzles } from "../data/puzzles";
-import { normalize } from "../utils/normalize";
+import { isCorrectAnswer } from "../utils/normalize";
+import { countGraphemes, splitGraphemes } from "../utils/graphemes";
 import { api, isMock } from "../api";
 import EmojiPicker from "./EmojiPicker";
 
@@ -26,9 +27,6 @@ const markSent = () => {
   }
 };
 
-const countGraphemes = (s: string) =>
-  [...new Intl.Segmenter().segment(s)].length;
-
 type State = "idle" | "sending" | "done";
 
 export default function ProposeForm({ onExit }: { onExit: () => void }) {
@@ -42,7 +40,7 @@ export default function ProposeForm({ onExit }: { onExit: () => void }) {
   const [showPicker, setShowPicker] = useState(false);
 
   const townExists = puzzles.some(
-    (p) => answer.trim() && normalize(p.answer) === normalize(answer)
+    (p) => answer.trim() && isCorrectAnswer(answer, p)
   );
 
   const addEmoji = (emojiChar: string) => {
@@ -55,10 +53,10 @@ export default function ProposeForm({ onExit }: { onExit: () => void }) {
     }
   };
   const removeLastEmoji = () => {
-    const segments = [...new Intl.Segmenter().segment(emojis)];
+    const segments = splitGraphemes(emojis);
     if (segments.length > 0) {
       segments.pop();
-      setEmojis(segments.map((s) => s.segment).join(""));
+      setEmojis(segments.join(""));
       setError(null);
     }
   };
