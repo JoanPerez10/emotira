@@ -151,7 +151,7 @@ describe('TimeTrial component', () => {
     expect(screen.getByText('1')).toBeInTheDocument()
   })
 
-  it('mostra pistes comarca i inicial quan es produeixen errors', () => {
+  it('mostra pistes comarca i inicial quan es produeixen errors sense buidar les lletres', () => {
     render(
       <TimeTrial
         deck={mockPuzzles}
@@ -168,20 +168,26 @@ describe('TimeTrial component', () => {
     fireEvent.change(input, { target: { value: 'XYZ' } })
     fireEvent.click(screen.getByRole('button', { name: 'Comprovar' }))
 
-    // Després del 1r error, mostra la comarca
+    // Després del 1r error, mostra el missatge d'error i la comarca
+    expect(screen.getByRole('alert')).toHaveTextContent(/Ups! Prova una altra lletra/i)
     expect(screen.getByText(/Comarca: Osona/)).toBeInTheDocument()
+    // No buida les lletres introduïdes
+    expect(input).toHaveValue('XYZ')
+
+    // En canviar el text s'amaga l'avís d'error
+    fireEvent.change(input, { target: { value: 'ABC' } })
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
 
     // 2n Intent incorrecte: "ABC"
-    const input2 = screen.getByLabelText(/Escriu el nom del poble/i)
-    fireEvent.change(input2, { target: { value: 'ABC' } })
     fireEvent.click(screen.getByRole('button', { name: 'Comprovar' }))
 
-    // Després del 2n error, mostra comença per inicial
+    // Després del 2n error, mostra comença per inicial i l'avís d'error
+    expect(screen.getByRole('alert')).toHaveTextContent(/Ups! Prova una altra lletra/i)
     expect(screen.getByText(/Comença per «V»/)).toBeInTheDocument()
+    expect(input).toHaveValue('ABC')
 
     // 3r Intent incorrecte: "FFF"
-    const input3 = screen.getByLabelText(/Escriu el nom del poble/i)
-    fireEvent.change(input3, { target: { value: 'FFF' } })
+    fireEvent.change(input, { target: { value: 'FFF' } })
     fireEvent.click(screen.getByRole('button', { name: 'Comprovar' }))
 
     // S'esgoten els intents (fails == 3), avança amb timeout de 1100ms

@@ -99,7 +99,7 @@ describe('InverseGame component', () => {
     expect(screen.getByRole('button', { name: /Posició 1: buida/i })).toBeInTheDocument()
   })
 
-  it('conserva les posicions correctes i buida les incorrectes en fallar', () => {
+  it('no esborra la resposta introduïda i mostra l\'avís d\'error en fallar', () => {
     render(
       <InverseGame
         deck={mockPuzzles}
@@ -110,7 +110,7 @@ describe('InverseGame component', () => {
       />
     )
 
-    // Posició 1 correcta (🏛️), posició 2 incorrecta (posem 🐑 en comptes de 🐮)
+    // Posició 1 (🏛️), posició 2 incorrecta (posem 🐑 en comptes de 🐮)
     const templeBtn = screen.getByRole('button', { name: 'Afegir 🏛️' })
     const sheepBtn = screen.getByRole('button', { name: 'Afegir 🐑' })
 
@@ -120,10 +120,24 @@ describe('InverseGame component', () => {
     const checkBtn = screen.getByRole('button', { name: 'Comprovar' })
     fireEvent.click(checkBtn)
 
-    // La posició 1 ha de quedar bloquejada com a correcta
-    expect(screen.getByRole('button', { name: /Posició 1: 🏛️, correcte/i })).toBeInTheDocument()
-    // La posició 2 torna a quedar buida
-    expect(screen.getByRole('button', { name: /Posició 2: buida/i })).toBeInTheDocument()
+    // Mostra el missatge d'error
+    expect(screen.getByRole('alert')).toHaveTextContent(/Ups! Prova un altre emoji/i)
+
+    // No esborra la resposta introduïda
+    expect(screen.getByRole('button', { name: /Posició 1: 🏛️/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Posició 2: 🐑/i })).toBeInTheDocument()
+
+    // Permet treure l'emoji incorrecte i amaga l'avís d'error
+    const sheepSlot = screen.getByRole('button', { name: /Posició 2: 🐑/i })
+    fireEvent.click(sheepSlot)
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+
+    // Completa amb el correcte i encerta
+    const cowBtn = screen.getByRole('button', { name: 'Afegir 🐮' })
+    fireEvent.click(cowBtn)
+    fireEvent.click(screen.getByRole('button', { name: 'Comprovar' }))
+
+    expect(screen.getByText(/Encert!/i)).toBeInTheDocument()
   })
 
   it('permet usar pistes per eliminar distractors', () => {
