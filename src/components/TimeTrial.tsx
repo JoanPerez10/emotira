@@ -1,7 +1,7 @@
-import { useEffect, useReducer, useRef } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import type { Puzzle } from "../data/puzzles";
 import type { GameResult } from "../types";
-import { normalize } from "../utils/normalize";
+import { acceptedAnswers, isCorrectAnswer, normalize } from "../utils/normalize";
 import { shuffle } from "../utils/random";
 import { createTrial, trialReducer, TRIAL_ATTEMPTS, TRIAL_BONUS_STEPS, TRIAL_MAX_SECONDS, TRIAL_SECONDS } from "../utils/timeTrial";
 import Icon from "./Icon";
@@ -40,6 +40,12 @@ export function TimeTrialRules({ onPlay, onExit }: { onPlay: () => void; onExit:
 
 export default function TimeTrial({ deck, pool, onSolve, onFinish, onExit }: Props) {
   const [state, dispatch] = useReducer(trialReducer, deck, (queue) => createTrial(queue, performance.now()));
+  const [wrong, setWrong] = useState(false);
+  const [prevTurn, setPrevTurn] = useState(state.turn);
+  if (state.turn !== prevTurn) {
+    setPrevTurn(state.turn);
+    setWrong(false);
+  }
   const inputRef = useRef<LetterInputHandle>(null);
   const processedRef = useRef(0);
   const finishedRef = useRef(false);
@@ -77,6 +83,15 @@ export default function TimeTrial({ deck, pool, onSolve, onFinish, onExit }: Pro
 
   const submit = (text: string) => {
     if (!playing) return;
+    const norm = normalize(text);
+    if (!norm) return;
+    const accepted = acceptedAnswers(puzzle);
+    if (!accepted.includes(norm) && !accepted.some((a) => a.length === norm.length)) return;
+    if (isCorrectAnswer(text, puzzle)) {
+      setWrong(false);
+    } else {
+      setWrong(true);
+    }
     dispatch({ type: "submit", text, turn: state.turn, now: performance.now() });
   };
 
@@ -101,16 +116,19 @@ export default function TimeTrial({ deck, pool, onSolve, onFinish, onExit }: Pro
       <p className="puzzle-emoji">{puzzle.emojis}</p>
       {playing && state.fails >= 1 && puzzle.comarca && <p className="hint"><Icon name="lightbulb" size={18} /><span>Comarca: {puzzle.comarca}</span></p>}
       {playing && state.fails >= 2 && <p className="hint"><Icon name="lightbulb" size={18} /><span>Comença per «{puzzle.answer[0].toUpperCase()}»</span></p>}
-      <LetterInput resetKey={`${state.turn}-${state.fails}`} ref={inputRef} words={words} onSubmit={submit} nativeTapFocus
+      <LetterInput resetKey={state.turn} ref={inputRef} words={words} onSubmit={submit} nativeTapFocus
         reveal={playing ? null : { text: normalize(puzzle.answer), kind: state.status === "correct" ? "ok" : "nope" }}
-        shakeKey={state.fails} />
+        shakeKey={state.fails}
+        onInput={() => setWrong(false)} />
+      {playing && wrong && <p className="error" role="alert">Ups! Prova una altra lletra</p>}
       <span className="sr-only" role="status">{state.message}</span>
       <div className="actions">
-        <button disabled={!playing} onPointerDown={(e) => e.preventDefault()} onClick={() => {
+        <button disabled={!playing} className={wrong ? "danger" : undefined} onPointerDown={(e) => e.preventDefault()} onClick={() => {
           inputRef.current?.focus();
           inputRef.current?.submit();
         }}>Comprovar</button>
         <button className="secondary" disabled={!playing} onClick={() => {
+          setWrong(false);
           dispatch({ type: "skip", turn: state.turn, now: performance.now() });
           inputRef.current?.focus();
         }}>Saltar −2 s</button>

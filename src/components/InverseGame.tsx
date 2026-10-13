@@ -62,6 +62,7 @@ function InverseRound({ puzzle, pool, isLast, onSolve, onDone }: {
   const [fails, setFails] = useState(0);
   const [result, setResult] = useState<PuzzleResult | null>(null);
   const [message, setMessage] = useState("");
+  const [wrong, setWrong] = useState(false);
   const selectorRef = useRef<HTMLDivElement>(null);
   const checkRef = useRef<HTMLButtonElement>(null);
   const nextRef = useRef<HTMLButtonElement>(null);
@@ -89,12 +90,14 @@ function InverseRound({ puzzle, pool, isLast, onSolve, onDone }: {
 
   const select = (emoji: string) => {
     if (!playing || full) return;
+    setWrong(false);
     const firstEmpty = slots.indexOf(null);
     setSlots((prev) => prev.map((value, i) => i === firstEmpty ? emoji : value));
   };
 
   const surrender = () => {
     if (!playing) return;
+    setWrong(false);
     setSlots(answer);
     setResult({ status: "revealed", hints: 3 });
     setMessage("Aquesta era la combinació correcta.");
@@ -102,6 +105,7 @@ function InverseRound({ puzzle, pool, isLast, onSolve, onDone }: {
 
   const useHint = () => {
     if (!playing || hints >= 2) return;
+    setWrong(false);
     const nextRemoved = eliminateDistractors(options, answer, removed);
     setRemoved(nextRemoved);
     setSlots((prev) => prev.map((emoji) => emoji && nextRemoved.includes(emoji) ? null : emoji));
@@ -112,6 +116,7 @@ function InverseRound({ puzzle, pool, isLast, onSolve, onDone }: {
     if (!playing || !full) return;
     const matches = answer.map((emoji, i) => emoji === slots[i]);
     if (matches.every(Boolean)) {
+      setWrong(false);
       setLocked(matches);
       setResult({ status: "correct", hints: penalty, answer: puzzle.answer });
       setMessage(`Encert! ${points} ${points === 1 ? "punt" : "punts"}.`);
@@ -119,9 +124,7 @@ function InverseRound({ puzzle, pool, isLast, onSolve, onDone }: {
       return;
     }
     setFails((prev) => prev + 1);
-    setLocked(matches);
-    setSlots((prev) => prev.map((emoji, i) => matches[i] ? emoji : null));
-    setMessage("");
+    setWrong(true);
   };
 
   return (
@@ -133,7 +136,10 @@ function InverseRound({ puzzle, pool, isLast, onSolve, onDone }: {
             className={`inverse-slot${locked[i] ? " is-correct" : ""}${result?.status === "revealed" && !locked[i] ? " is-revealed" : ""}`}
             disabled={!playing || locked[i] || !emoji}
             aria-label={`Posició ${i + 1}: ${emoji ?? "buida"}${locked[i] ? ", correcte" : emoji ? ", toca per treure" : ""}`}
-            onClick={() => setSlots((prev) => prev.map((value, j) => i === j ? null : value))}>
+            onClick={() => {
+              setWrong(false);
+              setSlots((prev) => prev.map((value, j) => i === j ? null : value));
+            }}>
             {emoji}
           </button>
         ))}
@@ -150,12 +156,16 @@ function InverseRound({ puzzle, pool, isLast, onSolve, onDone }: {
           <h2>Aquesta era la combinació:</h2>
           <p>{puzzle.explanation}</p>
         </div>
-      ) : <p className={`inverse-message${result?.status === "correct" ? " is-correct" : ""}`} role="status">{message || "\u00a0"}</p>}
+      ) : wrong ? (
+        <p className="error" role="alert">Ups! Prova un altre emoji</p>
+      ) : (
+        <p className={`inverse-message${result?.status === "correct" ? " is-correct" : ""}`} role="status">{message || "\u00a0"}</p>
+      )}
       <div className="actions">
         {!playing ? (
           <button ref={nextRef} type="button" onClick={advance}>{isLast ? "Veure el resultat" : "Poble següent"}</button>
         ) : <>
-        <button ref={checkRef} type="button" disabled={!playing || !full} onClick={submit}>Comprovar</button>
+        <button ref={checkRef} type="button" className={wrong ? "danger" : undefined} disabled={!playing || !full} onClick={submit}>Comprovar</button>
         <button type="button" className="accent" disabled={!playing || hints >= 2} onClick={useHint}>
           {hints >= 2 ? "Ja ho saps tot" : `Pista (${hints}/2)`}
         </button>
