@@ -13,7 +13,13 @@ const loadVoted = (): Record<number, 1 | -1> => {
   }
 };
 
-export default function VoteScreen({ onExit }: { onExit: () => void }) {
+export default function VoteScreen({
+  onExit,
+  onPropose,
+}: {
+  onExit: () => void;
+  onPropose?: () => void;
+}) {
   const [items, setItems] = useState<Proposal[]>([]);
   const [tallies, setTallies] = useState<Record<number, Tally>>({});
   const [voted, setVoted] = useState<Record<number, 1 | -1>>(loadVoted);
@@ -64,6 +70,15 @@ export default function VoteScreen({ onExit }: { onExit: () => void }) {
         <strong>🗳️ Vota propostes</strong>
       </div>
       <p>Ajuda a decidir quins trencaclosques entren al joc.</p>
+
+      {/* Proposar i votar són el mateix bucle, així que comparteixen
+          pantalla: qui juga entra per aquí i descobreix que pot enviar
+          la seva quan li sembli que en cal. */}
+      {onPropose && (
+        <div className="actions">
+          <button className="secondary" onClick={onPropose}>✏️ Proposa un poble</button>
+        </div>
+      )}
 
       {loading && <p>Carregant…</p>}
       {error && <p className="error" role="alert">{error}</p>}

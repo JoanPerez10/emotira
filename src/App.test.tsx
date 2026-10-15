@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import App from './App'
 import { api } from './api'
 import { todayKey } from './utils/daily'
+import { MENU_MODES } from './modes'
 import type { Session } from './api/types'
 
 describe('App component', () => {
@@ -16,51 +17,101 @@ describe('App component', () => {
     vi.spyOn(api, 'fetchAcceptedPuzzles').mockResolvedValue([])
   })
 
-  it('renderitza el menú principal amb la capçalera, modes i enllaços', () => {
+  /** El menú principal mostra repte diari, banner de modes i comunitat; no els modes. */
+  const openModes = () =>
+    fireEvent.click(screen.getByRole('button', { name: /Tots els modes/i }))
+
+  /** Obre el menú principal des de qualsevol pantalla que hi torni. */
+  const backToMenu = () =>
+    fireEvent.click(screen.getByRole('button', { name: '← Menú' }))
+
+  it('renderitza el menú principal amb la capçalera, el repte diari i el banner', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { level: 1, name: 'Emotira' })).toBeInTheDocument()
     expect(screen.getByText('Endevina què és amb només emojis')).toBeInTheDocument()
-    expect(screen.getByText(/👤 Convidat/)).toBeInTheDocument()
     expect(screen.getByText('Repte diari')).toBeInTheDocument()
-    expect(screen.getByText('Contrarellotge')).toBeInTheDocument()
-    expect(screen.getByText('Invers')).toBeInTheDocument()
-    expect(screen.getByText('Endivina 10')).toBeInTheDocument()
-    expect(screen.getByText('Col·lecció')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Repte diari/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Tots els modes/i })).toBeInTheDocument()
   })
 
-  it('navega a la pantalla de rècords i permet tornar al menú', () => {
+  it('mostra les tres xifres del capçalera i el compte com a botó', () => {
     render(<App />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Els teus rècords' }))
+    expect(screen.getByText('dies')).toBeInTheDocument()
+    expect(screen.getByText('pobles')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Convidat/ })).toBeInTheDocument()
+  })
 
-    expect(screen.getByText('Rècords')).toBeInTheDocument()
-    expect(screen.getByText('Repte diari')).toBeInTheDocument()
-    expect(screen.getByText('Contrarellotge')).toBeInTheDocument()
+  it('no obre cap mode des del menú principal: els noms són només etiquetes', () => {
+    render(<App />)
 
-    // Tornar al menú
-    fireEvent.click(screen.getByRole('button', { name: '← Menú' }))
+    // Els noms dels modes apareixen com a etiquetes al banner, però cap
+    // targeta de mode és clicable des del menú: tot passa pel banner.
+    for (const { sub } of MENU_MODES) {
+      expect(screen.queryByText(sub)).not.toBeInTheDocument()
+    }
+    expect(screen.getByText('Col·lecció').closest('.mode-card')).toBeNull()
+  })
+
+  it('obre la pantalla de tots els modes des del banner i hi mostra tots els modes', () => {
+    render(<App />)
+
+    openModes()
+
+    for (const { title } of MENU_MODES) {
+      expect(screen.getByText(title)).toBeInTheDocument()
+    }
+
+    backToMenu()
     expect(screen.getByRole('heading', { level: 1, name: 'Emotira' })).toBeInTheDocument()
   })
 
-  it('permet esborrar els rècords a la pantalla de rècords si l\'usuari confirma', () => {
+  it('ofereix descoberta i comunitat al menú principal', () => {
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Descobreix i comunitat' })).toBeInTheDocument()
+    for (const label of ['Col·lecció', 'Rànquing', 'Grups', 'Propostes', 'Els teus rècords']) {
+      // El nom accessible de la fila és «etiqueta + descripció»: es filtra
+      // pel text visible perquè «Grups» xocaria amb «Grups dels Països…».
+      expect(screen.getByText(label).closest('button')).toBeInTheDocument()
+    }
+    // «Proposa» no és entrada del menú: es proposa des de la pantalla de
+    // les propostes.
+    expect(screen.queryByText('Proposta')).not.toBeInTheDocument()
+  })
+
+  it('els rècords són al menú i s´hi arriba sense compte', () => {
+    render(<App />)
+
+    // Sense compte: són dades del dispositiu, no del perfil.
+    fireEvent.click(screen.getByText('Els teus rècords').closest('button')!)
+
+    expect(screen.getByText('Rècords')).toBeInTheDocument()
+    for (const mode of ['Repte diari', 'Endivina 10', 'Contrarellotge', 'Invers', 'Música']) {
+      expect(screen.getByText(mode)).toBeInTheDocument()
+    }
+  })
+
+  it('permet esborrar els rècords des de la seva pantalla si l\'usuari confirma', () => {
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
 
     render(<App />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Els teus rècords' }))
+    fireEvent.click(screen.getByText('Els teus rècords').closest('button')!)
     const resetBtn = screen.getByRole('button', { name: 'Esborrar tots els rècords' })
     fireEvent.click(resetBtn)
 
     expect(confirmSpy).toHaveBeenCalled()
+    // Esborra les dades i torna a pintar-les a zero.
     expect(screen.getByText('Reptes jugats:')).toBeInTheDocument()
   })
 
-  it('navega a la pantalla del compte des de la xip de la capçalera', () => {
+  it('navega a la pantalla del compte des de la targeta del capçalera', () => {
     render(<App />)
 
-    const userChip = screen.getByRole('button', { name: '👤 Convidat' })
-    fireEvent.click(userChip)
+    const userTile = screen.getByRole('button', { name: /Convidat/ })
+    fireEvent.click(userTile)
 
     expect(screen.getByText('👤 Compte')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Entrar' })).toBeInTheDocument()
@@ -68,6 +119,7 @@ describe('App component', () => {
 
   it('navega a les regles de contrarellotge i permet iniciar el joc', () => {
     render(<App />)
+    openModes()
 
     const trialCard = screen.getByRole('button', { name: /Contrarellotge/i })
     fireEvent.click(trialCard)
@@ -80,8 +132,9 @@ describe('App component', () => {
     expect(screen.getByRole('timer')).toBeInTheDocument()
   })
 
-  it('inicia el mode invers directament', () => {
+  it('inicia el mode invers des de la pantalla de modes', () => {
     render(<App />)
+    openModes()
 
     const inverseCard = screen.getByRole('button', { name: /Invers/i })
     fireEvent.click(inverseCard)
@@ -92,6 +145,7 @@ describe('App component', () => {
 
   it('inicia el joc clàssic (Endivina 10)', () => {
     render(<App />)
+    openModes()
 
     const tenCard = screen.getByRole('button', { name: /Endivina 10/i })
     fireEvent.click(tenCard)
@@ -100,14 +154,20 @@ describe('App component', () => {
     expect(screen.getByRole('button', { name: 'Comprovar' })).toBeInTheDocument()
   })
 
-  it('navega a Proposa un poble i a Vota propostes', () => {
+  it('obre les propostes des del menú i hi accedeix al formulari per proposar', () => {
     render(<App />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Proposa un poble' }))
+    // Una sola entrada per al bucle complet de la comunitat.
+    fireEvent.click(screen.getByText('Propostes').closest('button')!)
+    expect(screen.getByText('🗳️ Vota propostes')).toBeInTheDocument()
+
+    // I des de aquí mateix es proposa un poble, sense tornar al menú.
+    fireEvent.click(screen.getByRole('button', { name: /Proposa un poble/i }))
     expect(screen.getByText(/Proposa un poble/)).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: '← Menú' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Vota propostes' }))
+    // El formulari torna al menú pel seu propi botó «← Menú».
+    backToMenu()
+    fireEvent.click(screen.getByText('Propostes').closest('button')!)
     expect(screen.getByText('🗳️ Vota propostes')).toBeInTheDocument()
   })
 
@@ -160,6 +220,7 @@ describe('App component', () => {
 
     expect(screen.getByText('Avui ja has jugat')).toBeInTheDocument()
     expect(screen.getByText('3/3')).toBeInTheDocument()
+    expect(screen.getByText('🟩🟩🟩')).toBeInTheDocument()
 
     const shareBtn = screen.getByRole('button', { name: /Compartir resultat/i })
     fireEvent.click(shareBtn)
@@ -184,44 +245,47 @@ describe('App component', () => {
     render(<App />)
 
     await waitFor(() => {
-      expect(screen.getByText('👤 joan_test')).toBeInTheDocument()
+      // La targeta del compte mostra el nom d'usuari, no «👤 usuari».
+      expect(screen.getByRole('button', { name: /joan_test/ })).toBeInTheDocument()
     })
   })
 
   it('inicia els modes música, difícil i infinit', () => {
     render(<App />)
+    openModes()
 
     // Mode Música
     fireEvent.click(screen.getByRole('button', { name: /Música/i }))
     expect(screen.getByText('Música')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: '← Menú' }))
+    backToMenu()
+    openModes()
 
     // Mode Difícil
     fireEvent.click(screen.getByRole('button', { name: /Mode difícil/i }))
     expect(screen.getByText('Mode difícil')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: '← Menú' }))
+    backToMenu()
+    openModes()
 
     // Mode Infinit
     fireEvent.click(screen.getByRole('button', { name: /Mode infinit/i }))
     expect(screen.getByText('Mode infinit')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: '← Menú' }))
   })
 
-  it('navega a la col·lecció, al rànquing i als grups des dels enllaços del menú', async () => {
+  it('navega a la col·lecció, al rànquing i als grups des del menú', async () => {
     render(<App />)
 
     // Col·lecció (lazy import amb Suspense)
-    fireEvent.click(screen.getByRole('button', { name: /Col·lecció/i }))
+    fireEvent.click(screen.getByText('Col·lecció').closest('button')!)
     const backBtn = await screen.findByRole('button', { name: '← Menú' })
     fireEvent.click(backBtn)
 
     // Rànquing
-    fireEvent.click(screen.getByRole('button', { name: 'Rànquing' }))
+    fireEvent.click(screen.getByText('Rànquing').closest('button')!)
     expect(screen.getByText(/Rànquing/)).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: '← Menú' }))
+    backToMenu()
 
     // Grups
-    fireEvent.click(screen.getByRole('button', { name: 'Grups' }))
+    fireEvent.click(screen.getByText('Grups').closest('button')!)
     expect(screen.getByText(/Per crear un grup/i)).toBeInTheDocument()
   })
 
@@ -256,6 +320,7 @@ describe('App component', () => {
   it('mostra la pantalla de resultat en acabar una partida de contrarellotge i permet reiniciar', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     render(<App />)
+    openModes()
 
     // Iniciar contrarellotge
     fireEvent.click(screen.getByRole('button', { name: /Contrarellotge/i }))
@@ -281,14 +346,14 @@ describe('App component', () => {
     render(<App />)
 
     // Des de Rànquing
-    fireEvent.click(screen.getByRole('button', { name: 'Rànquing' }))
+    fireEvent.click(screen.getByText('Rànquing').closest('button')!)
     const loginRankingBtn = await screen.findByRole('button', { name: /Entrar \/ Crear compte/i })
     fireEvent.click(loginRankingBtn)
     expect(screen.getByText('👤 Compte')).toBeInTheDocument()
 
     // Tornar al menú i després a Grups
-    fireEvent.click(screen.getByRole('button', { name: '← Menú' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Grups' }))
+    backToMenu()
+    fireEvent.click(screen.getByText('Grups').closest('button')!)
     const loginGroupsBtn = await screen.findByRole('button', { name: /Entrar \/ Crear compte/i })
     fireEvent.click(loginGroupsBtn)
     expect(screen.getByText('👤 Compte')).toBeInTheDocument()
@@ -303,7 +368,7 @@ describe('App component', () => {
     expect(screen.getByText('Poble 1 de 5')).toBeInTheDocument()
   })
 
-  it('navega al compte des del botó "El meu compte" quan hi ha sessió i des d\'allà a rànquing i grups', async () => {
+  it('navega al compte des de la targeta del capçalera quan hi ha sessió i des d\'allà a rànquing i grups', async () => {
     const mockSession: Session = {
       id: 'user-123',
       username: 'joan_connectat',
@@ -315,19 +380,20 @@ describe('App component', () => {
 
     render(<App />)
 
-    const accountBtn = await screen.findByRole('button', { name: 'El meu compte' })
+    // La targeta del compte és l'única entrada al compte.
+    const accountBtn = await screen.findByRole('button', { name: /joan_connectat/ })
     fireEvent.click(accountBtn)
 
     expect(screen.getByText('👤 Compte')).toBeInTheDocument()
 
-    // Navegar a rànquing des de la pantalla de compte (línia 377)
+    // Navegar a rànquing des de la pantalla de compte
     const rankingBtn = screen.getByRole('button', { name: /Veure el rànquing/i })
     fireEvent.click(rankingBtn)
     expect(screen.getByText('🏅 Rànquing')).toBeInTheDocument()
 
-    // Tornar al compte i després a grups (línia 378)
-    fireEvent.click(screen.getByRole('button', { name: '← Menú' }))
-    fireEvent.click(screen.getByRole('button', { name: 'El meu compte' }))
+    // Tornar al compte i després a grups
+    backToMenu()
+    fireEvent.click(screen.getByRole('button', { name: /joan_connectat/ }))
     const groupsBtn = screen.getByRole('button', { name: /Els meus grups/i })
     fireEvent.click(groupsBtn)
     expect(screen.getByText('👥 Grups')).toBeInTheDocument()

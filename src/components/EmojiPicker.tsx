@@ -6,6 +6,12 @@ import { splitGraphemes } from "../utils/graphemes";
  * Selector d'emojis propi, en lloc de `emoji-picker-react` (41 MB i desenes
  * de milers d'emojis per un camp que admet 10). Aquí només hi ha el que
  * serveix per endevinar un poble de Catalunya, agrupat i amb cerca.
+ *
+ * Criteri del catàleg: cap emoji més nou que Unicode 12 (2019). Els més
+ * recents (🛖 🟰 🪜 🪨 🪵 🫏 🫒 🦿 🫂 🪦) no els tenen els sistemes
+ * antics i sortien com a caixes buides, de manera que un jugador podia
+ * proposar un poble que ningú no veuria. `puzzles.ts` segueix el mateix
+ * criteri.
  */
 
 type Entry = readonly [emoji: string, ...keywords: string[]];
@@ -24,7 +30,6 @@ const BASE_GROUPS: Group[] = [
       ["🏠", "casa", "cal", "home", "habitatge"],
       ["🏡", "casa", "mas", "jardi", "hort"],
       ["🏘️", "poble", "vila", "barri", "cases"],
-      ["🛖", "cabana", "barraca"],
       ["🏰", "castell", "fortalesa", "palau"],
       ["⛪", "esglesia", "campanar", "iglesia"],
       ["🏛️", "museu", "edifici", "monument"],
@@ -32,7 +37,6 @@ const BASE_GROUPS: Group[] = [
       ["🏥", "hospital"],
       ["🏗️", "construccio", "obra", "grua"],
       ["🧱", "paret", "mur", "totxo", "maó"],
-      ["🪨", "roca", "pedra"],
       ["⛰️", "muntanya", "mont", "puig", "cima"],
       ["🏔️", "muntanya", "neu", "alps", "pirineu"],
       ["🗻", "muntanya", "cim"],
@@ -85,7 +89,6 @@ const BASE_GROUPS: Group[] = [
       ["🐂", "bou", "brau", "toro"],
       ["🐮", "vaca"],
       ["🐴", "cavall", "egua"],
-      ["🫏", "ruc", "ase", "burro"],
       ["🐷", "porc", "garri"],
       ["🦁", "lleo"],
       ["🐯", "tigre"],
@@ -128,7 +131,7 @@ const BASE_GROUPS: Group[] = [
       ["🍒", "cirera"],
       ["🍑", "pressec", "préssec"],
       ["🍍", "pinya"],
-      ["🫒", "oliva", "olivera"],
+      ["🌿", "oliva", "olivera", "fulla"],
       ["🌰", "castanya"],
       ["🍅", "tomaquet", "tomàquet", "tomata"],
       ["🥕", "pastanaga"],
@@ -232,8 +235,7 @@ const BASE_GROUPS: Group[] = [
       ["⚓", "ancora", "àncora", "port"],
       ["🔪", "ganivet", "matar"],
       ["✂️", "tisores", "tallar", "tosa"],
-      ["🪵", "fusta", "pal", "tronc"],
-      ["🪜", "escala"],
+      ["🌲", "fusta", "pal", "tronc"],
       ["⚙️", "engranatge", "moli", "molí", "roda"],
       ["🔦", "llanterna"],
       ["🔑", "clau"],
@@ -272,7 +274,7 @@ const BASE_GROUPS: Group[] = [
       ["🟢", "verd"],
       ["🔵", "blau"],
       ["🟡", "groc"],
-      ["🟰", "igual"],
+      ["⚖️", "igual", "balança", "equilibri"],
       ["➕", "mes", "més", "suma"],
       ["➖", "menys"],
       ["❌", "no", "creu"],

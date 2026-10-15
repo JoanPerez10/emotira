@@ -29,12 +29,14 @@ import type { Session } from "./api/types";
 import { MODES as ALL_MODES, MODE_TITLES as TITLES, MODE_ICONS, MODE_IMAGES, scoreOf, starsFor, MENU_MODES } from "./modes";
 import { firstGrapheme } from "./utils/graphemes";
 import Icon from "./components/Icon";
+import type { IconName } from "./components/Icon";
 
 // El mapa de municipis pesa ~125 KB: només es descarrega en obrir la Col·lecció
 const Collection = lazy(() => import("./components/Collection"));
 
 type Screen =
   | "menu"
+  | "modes"
   | "trialRules"
   | "records"
   | "play"
@@ -46,6 +48,36 @@ type Screen =
   | "account"
   | "ranking"
   | "groups";
+
+/** Les entrades que no són modes. `sub` és el text que surt a la targeta: una
+ *  paraula sola deixava la caixa buida, i el títol + frase és el que fa que
+ *  la targeta sembli proucosa. `tone` només pintar la icona: la targeta es
+ *  queda blanca i el color, concentrat, és el que fa de senyal.
+ *
+ *  Els rècords hi són perquè són dades teves i hi arribes sense compte: dins
+ *  del perfil quedaven enterrats sota el formulari de registre, i com a
+ *  convidat eren pràcticament inaccessibles. */
+const MENU_LINKS: {
+  icon: IconName;
+  label: string;
+  sub: string;
+  screen: Screen;
+  tone: "blue" | "gold" | "green" | "coral";
+  wide?: boolean;
+}[] = [
+  { icon: "map", label: "Col·lecció", sub: "Pobles trobats", screen: "collection", tone: "blue" },
+  { icon: "crown", label: "Rànquing", sub: "Qui encerta més", screen: "ranking", tone: "gold" },
+  { icon: "users", label: "Grups", sub: "Juga amb amics", screen: "groups", tone: "green" },
+  { icon: "ballot", label: "Propostes", sub: "Vota i proposa", screen: "vote", tone: "coral" },
+  {
+    icon: "chart",
+    label: "Els teus rècords",
+    sub: "Millor resultat de cada mode",
+    screen: "records",
+    tone: "blue",
+    wide: true,
+  },
+];
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("menu");
@@ -328,7 +360,9 @@ export default function App() {
   }
 
   if (screen === "vote") {
-    return <VoteScreen onExit={() => setScreen("menu")} />;
+    return (
+      <VoteScreen onExit={() => setScreen("menu")} onPropose={() => setScreen("propose")} />
+    );
   }
 
   if (screen === "account") {
@@ -339,6 +373,7 @@ export default function App() {
         onExit={() => setScreen("menu")}
         onGoToRanking={() => setScreen("ranking")}
         onGoToGroups={() => setScreen("groups")}
+        onGoToRecords={() => setScreen("records")}
       />
     );
   }
@@ -350,6 +385,34 @@ export default function App() {
   if (screen === "groups") {
     return (
       <GroupsScreen session={session} onExit={() => setScreen("menu")} onLogin={() => setScreen("account")} />
+    );
+  }
+  if (screen === "modes") {
+    /* Tots els modes i, a sota, la resta d'entrades. Aquí sí que es pot
+       fer scroll: el menú principal es queda curt i aquesta pantalla
+       creix sol quan hi ha modes nous. */
+    return (
+      <main className="app">
+        <div className="topbar">
+          <button className="back" onClick={() => setScreen("menu")}>← Menú</button>
+          <strong className="topbar-title">
+            <Icon name="grid" size={20} /> Tots els modes
+          </strong>
+        </div>
+        <div className="grid">
+          {MENU_MODES.map(({ mode: m, icon, title, sub, variant, src }) => (
+            <button key={m} className={`mode-card v-${variant}`} onClick={() => start(m)}>
+              <span className={`mode-icon${src ? " mode-icon-image" : ""}`}>
+                {src
+                  ? <img src={src} alt="" width={1254} height={1254} draggable={false} />
+                  : <Icon name={icon} size={21} />}
+              </span>
+              <span className="mode-title">{title}</span>
+              <span className="mode-sub">{sub}</span>
+            </button>
+          ))}
+        </div>
+      </main>
     );
   }
   if (screen === "collection") {
@@ -372,6 +435,8 @@ export default function App() {
           <button className="back" onClick={() => setScreen("menu")}>← Menú</button>
           <strong>Rècords</strong>
         </div>
+        <p>Els teus millors resultats. Es guarden en aquest dispositiu i, si
+          tens compte, també al núvol.</p>
         <section className="stats">
           <h3><Icon name="calendar" size={18} /> Repte diari</h3>
           <p>Ratxa actual: <b>{currentStreak(records)}</b> dies</p>
@@ -419,12 +484,11 @@ export default function App() {
       </main>
     );
   }
-
   const streak = currentStreak(records);
   const found = records.unlockedTowns.length;
 
   return (
-    <main className="app">
+    <main className="app menu">
       <header className="hero">
         <img
           className="hero-fox"
@@ -437,23 +501,47 @@ export default function App() {
         <div className="hero-copy">
           <h1>Emotira</h1>
           <p>Endevina què és amb només emojis</p>
-          <div className="chips">
-            <span className="chip chip-fire">Ratxa: {streak} {streak === 1 ? "dia" : "dies"}</span>
-            <span className="chip chip-map">{found} {found === 1 ? "poble" : "pobles"} trobats</span>
+          {/* Les tres xapes són botons i, per tant, tenen la mateixa peça i la
+              mateixa vora de baix que la resta. Abans les dues primeres
+              eren text i això es llegia com si estiguessin trencades:
+              la ratxa obre el repte del dia i els pobles, la col·lecció. */}
+          <div className="hero-stats">
             <button
               type="button"
-              className="chip chip-user"
+              className="hero-stat"
+              onClick={() => start("daily")}
+              title="Jugar el repte d'avui"
+            >
+              <span className="hero-stat-icon v-gold"><Icon name="flame" size={18} /></span>
+              <b>{streak}</b>
+              <span>{streak === 1 ? "dia" : "dies"}</span>
+            </button>
+            <button
+              type="button"
+              className="hero-stat"
+              onClick={() => setScreen("collection")}
+              title="Obre la col·lecció de pobles"
+            >
+              <span className="hero-stat-icon v-orange"><Icon name="map" size={18} /></span>
+              <b>{found}</b>
+              <span>{found === 1 ? "poble" : "pobles"}</span>
+            </button>
+            <button
+              type="button"
+              className="hero-stat"
               onClick={() => setScreen("account")}
               title="Gestiona el teu compte"
             >
-              {session ? `👤 ${session.username}` : "👤 Convidat"}
+              <span className="hero-stat-icon v-blue"><Icon name="user" size={18} /></span>
+              <b>{session ? session.username : "Convidat"}</b>
+              <span>{session ? "el teu compte" : "entra o crea"}</span>
             </button>
           </div>
           {syncing && <p className="help">Sincronitzant els teus rècords…</p>}
         </div>
       </header>
 
-      <nav className="menu" aria-label="Modes de joc">
+      <nav className="menu" aria-label="Menú principal">
         {/* ── Repte diari: la portada, sempre la mateixa cada dia ── */}
         {todayResult ? (
           <div className="daily-card is-done">
@@ -490,39 +578,45 @@ export default function App() {
           </button>
         )}
 
-        {/* ── La resta, en graella de dues columnes ── */}
-        <div className="grid">
-          {MENU_MODES.map(({ mode: m, icon, title, sub, variant, src }) => (
-            <button key={m} className={`mode-card v-${variant}`} onClick={() => start(m)}>
-              <span className={`mode-icon${src ? " mode-icon-image" : ""}`}>
-                {src
-                  ? <img src={src} alt="" width={1254} height={1254} draggable={false} />
-                  : <Icon name={icon} size={21} />}
-              </span>
-              <span className="mode-title">{title}</span>
-              <span className="mode-sub">{sub}</span>
-            </button>
-          ))}
-          <button className="mode-card v-blue" onClick={() => setScreen("collection")}>
-            <span className={"mode-icon mode-icon-image"}>
-              <img src="/assets/colleccio-guineu.png" alt="" width={1254} height={1254} draggable={false} />
-            </span>
-            <span className="mode-title">Col·lecció</span>
-            <span className="mode-sub">El mapa de pobles</span>
-          </button>
-        </div>
-      </nav>
-
-      <div className="menu-links">
-        <button className="ghost" onClick={() => setScreen("ranking")}>Rànquing</button>
-        <button className="ghost" onClick={() => setScreen("groups")}>Grups</button>
-        <button className="ghost" onClick={() => setScreen("records")}>Els teus rècords</button>
-        <button className="ghost" onClick={() => setScreen("account")}>
-          {session ? "El meu compte" : "Entrar / Crear compte"}
+        {/* ── El banner dels modes ──
+            Targeta gran del menú, germana de la del repte diari: capçalera
+            amb icona i fila inferior amb els modes que hi ha al darrere. */}
+        <button className="modes-banner" onClick={() => setScreen("modes")}>
+          <span className="modes-head">
+            <span className="modes-icon"><Icon name="grid" size={22} /></span>
+            <span className="modes-title">Tots els modes</span>
+            <Icon name="chevron" size={20} className="modes-chevron" />
+          </span>
+          <span className="modes-preview" aria-hidden="true">
+            {MENU_MODES.slice(0, 4).map(({ mode, src }) =>
+              src ? <img key={mode} src={src} alt="" width={1254} height={1254} draggable={false} /> : null
+            )}
+            <span className="modes-more">+{MENU_MODES.length - 4}</span>
+          </span>
         </button>
-        <button className="ghost" onClick={() => setScreen("propose")}>Proposa un poble</button>
-        <button className="ghost" onClick={() => setScreen("vote")}>Vota propostes</button>
-      </div>
+      {/* ── Descobreix i comunitat ──
+          Dins del mateix contenidor que les targetes: un sol `gap`
+          governa tots els blocs i el ritme no es pot desincronitzar. */}
+      <h2 className="menu-h">
+        <Icon name="compass" size={13} /> Descobreix i comunitat
+      </h2>
+      <ul className="link-grid">
+        {MENU_LINKS.map((item) => (
+          <li key={item.label}>
+<button
+              className={`link-tile t-${item.tone}${item.wide ? " is-wide" : ""}`}
+              onClick={() => setScreen(item.screen)}
+            >
+              <span className="link-icon"><Icon name={item.icon} size={22} /></span>
+              <span className="link-tile-body">
+                <span className="link-tile-label">{item.label}</span>
+                <span className="link-tile-sub">{item.sub}</span>
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      </nav>
     </main>
   );
 }

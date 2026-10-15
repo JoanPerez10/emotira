@@ -3,7 +3,6 @@ import { api } from "../api";
 import type { Session } from "../api/types";
 import type { Records } from "../types";
 import { currentStreak } from "../utils/storage";
-import { formatScoreValue } from "../modes";
 import Icon from "./Icon";
 
 const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/;
@@ -14,12 +13,14 @@ export default function AccountScreen({
   onExit,
   onGoToRanking,
   onGoToGroups,
+  onGoToRecords,
 }: {
   session: Session | null;
   records: Records;
   onExit: () => void;
   onGoToRanking?: () => void;
   onGoToGroups?: () => void;
+  onGoToRecords?: () => void;
 }) {
   const [tab, setTab] = useState<"login" | "signup">("login");
   const [username, setUsername] = useState("");
@@ -105,38 +106,15 @@ export default function AccountScreen({
             <span className="chip chip-map">{found} {found === 1 ? "poble" : "pobles"} trobats</span>
           </div>
 
-          <ul className="account-stats-list">
-            <li>
-              <span><Icon name="calendar" size={16} /> Repte diari:</span>
-              <b>{records.daily.bestStreak} dies de ratxa</b>
-            </li>
-            <li>
-              <span><Icon name="target" size={16} /> Endivina 10:</span>
-              <b>{formatScoreValue("ten", records.ten.best)}</b>
-            </li>
-            <li>
-              <span><Icon name="flame" size={16} /> Mode difícil:</span>
-              <b>{formatScoreValue("hard", records.hard.best)}</b>
-            </li>
-            <li>
-              <span><Icon name="infinity" size={16} /> Mode infinit:</span>
-              <b>{formatScoreValue("infinite", records.infinite.bestStreak)}</b>
-            </li>
-            <li>
-              <span><Icon name="timer" size={16} /> Contrarellotge:</span>
-              <b>{formatScoreValue("timeTrial", records.timeTrial.best)}</b>
-            </li>
-            <li>
-              <span><Icon name="reverse" size={16} /> Invers:</span>
-              <b>{formatScoreValue("inverse", records.inverse.best)}</b>
-            </li>
-            <li>
-              <span><Icon name="music" size={16} /> Música:</span>
-              <b>{formatScoreValue("music", records.music.best)}</b>
-            </li>
-          </ul>
-
+          {/* El perfil no repeteix les xifres de cada mode: la llista completa viu
+            a la pantalla «Els teus rècords», que és al menú i s'hi arriba
+            sense compte. Aquí només el resum i les portes de sortida. */}
           <div className="actions">
+            {onGoToRecords && (
+              <button className="ghost" onClick={onGoToRecords}>
+                <Icon name="chart" size={18} /> Els teus rècords
+              </button>
+            )}
             {onGoToRanking && (
               <button onClick={onGoToRanking}>
                 <Icon name="trophy" size={18} /> Veure el rànquing
@@ -174,6 +152,10 @@ export default function AccountScreen({
           <p className="help">En crear un compte o entrar, es guardaran automàticament i sortiràs als rànquings!</p>
         </div>
       )}
+
+      {/* Sense compte, els rècords no són aquí: són a la pantalla «Els teus
+          rècords» del menú, que s'hi arriba sense entrar. Aquesta pantalla
+          és per crear compte o entrar-hi. */}
       {api.loginHint && <p className="help">🧪 {api.loginHint}</p>}
 
       <div className="tabs tabs--segmented" role="tablist">
