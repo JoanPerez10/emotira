@@ -2,7 +2,7 @@ import type { Puzzle } from "./puzzles";
 
 export const musicPuzzles: Puzzle[] = [
   {
-    emojis: "🪿🍔",
+    emojis: "🦆🍔",
     answer: "Oques Grasses",
     comarca: "Osona",
     explanation: "Oques + hamburgueses (grasses)",
@@ -105,7 +105,7 @@ export const musicPuzzles: Puzzle[] = [
     explanation: "Metge (doctor) + càmping/prats",
   },
   {
-    emojis: "🫂🎨",
+    emojis: "👬🎨",
     answer: "Els Amics de les Arts",
     comarca: "Barcelonès",
     aliases: ["Amics de les Arts"],

@@ -17,7 +17,17 @@ export type IconName =
   | "share"
   | "check"
   | "plus"
-  | "music";
+  | "music"
+  | "grid"
+  | "chevron"
+  | "play"
+  | "user"
+  | "users"
+  | "crown"
+  | "chart"
+  | "pencil"
+  | "ballot"
+  | "compass";
 
 interface Props {
   name: IconName;
@@ -84,6 +94,59 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <path d="M9 18V5l12-2v13" />
       <circle cx="6" cy="18" r="3" />
       <circle cx="18" cy="16" r="3" />
+    </>
+  ),
+  grid: (
+    <>
+      <rect x="3.5" y="3.5" width="7" height="7" rx="2.2" />
+      <rect x="13.5" y="3.5" width="7" height="7" rx="2.2" />
+      <rect x="3.5" y="13.5" width="7" height="7" rx="2.2" />
+      <rect x="13.5" y="13.5" width="7" height="7" rx="2.2" />
+    </>
+  ),
+  chevron: <path d="M9.5 5.5 16 12l-6.5 6.5" />,
+  play: (
+    <>
+      <circle cx="12" cy="12" r="8.75" />
+      <path d="M10.2 8.4 15.6 12l-5.4 3.6Z" fill="currentColor" stroke="none" />
+    </>
+  ),
+  user: (
+    <>
+      <circle cx="12" cy="8" r="3.8" />
+      <path d="M4.8 20c0-3.9 3.2-6.3 7.2-6.3s7.2 2.4 7.2 6.3" />
+    </>
+  ),
+  users: (
+    <>
+      <circle cx="9.5" cy="8" r="3.3" />
+      <path d="M3.5 19.6c0-3.2 2.7-5.3 6-5.3s6 2.1 6 5.3" />
+      <path d="M16.8 5.3a3.3 3.3 0 0 1 0 5.5M18 14.4c1.8.8 2.7 2.2 2.7 4.2" />
+    </>
+  ),
+  crown: (
+    <>
+      <path d="M3.8 16.2 3 6.8l5.2 3.6L12 4.2l3.8 6.2 5.2-3.6-.8 9.4H3.8Z" />
+      <path d="M5.5 19.5h13" />
+    </>
+  ),
+  chart: <path d="M3.5 20.5h17M6.8 20V11.5M12 20V4.8M17.2 20v-5.6" />,
+  pencil: (
+    <>
+      <path d="M4.5 19.5l.9-3.8L16 5.1a2.12 2.12 0 0 1 3 3L8.4 18.7l-3.9.8Z" />
+      <path d="M14.2 6.9l3 3" />
+    </>
+  ),
+  ballot: (
+    <>
+      <rect x="3.5" y="3.5" width="17" height="17" rx="3.5" />
+      <path d="M7.5 9.4l1.7 1.7 3.3-3.3M7.5 15.6h9M7.5 18h5.5" />
+    </>
+  ),
+  compass: (
+    <>
+      <circle cx="12" cy="12" r="8.75" />
+      <path d="m15.4 8.6-2 4.8-4.8 2 2-4.8Z" />
     </>
   ),
 };
