@@ -186,6 +186,16 @@ p { line-height: 1.5; }
    joc: si no, «Menú» i el tittel queden a 800 px de distància. */
 .app.collection .topbar { max-width: 560px; margin-inline: auto; }
 .topbar strong { font-weight: 700; font-size: 1.05rem; }
+/* Retrat del mode a la capçalera: el mateix dibuix de la marca que al menú i
+   al resultat, no una icona de traç. El títol és el que parla; el dibuix hi
+   posa la marca al costat. */
+.topbar-mark {
+  width: 1.65rem;
+  height: 1.65rem;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 1px rgba(31, 41, 51, 0.14));
+}
+.topbar-title { display: inline-flex; align-items: center; gap: 0.4rem; }
 
 /* Retorn al menú: ha de ser llegible i clicable, no un text flotant. */
 .back {
@@ -243,6 +253,18 @@ p { line-height: 1.5; }
   text-align: left;
 }
 .hint svg { flex: 0 0 auto; color: var(--gold-ink); }
+/* La bombeta és el dibuix de «Proposa una idea», el mateix que al formulari:
+   es reconeix de seguida. Amb fons blanc tou perquè la llum de la bombeta
+   no es perdi damunt del daurat de la pista. */
+.hint .guineu {
+  flex: 0 0 auto;
+  width: 1.55rem;
+  height: 1.55rem;
+  object-fit: contain;
+  border-radius: var(--r-sm);
+  background: rgba(255, 255, 255, 0.75);
+  padding: 0.1rem;
+}
 .hint span { flex: 1; }
 .error {
   display: flex;
@@ -379,6 +401,40 @@ button:disabled {
 }
 .outline:hover:not(:disabled) { background: var(--orange-wash); filter: none; }
 .outline:active:not(:disabled) { box-shadow: 0 0 0 var(--orange); }
+
+/* Rendre's. No competeix amb «Comprovar» ni amb «Pista»: surt de la fila
+   d'accions i va a sota, sol, centrat i en versió discreta —blanc, amb
+   contorn fi i text coral— perquè es llegeixi com el que és, una via de
+   sortida, i no com l'acció principal. Segueix sent un botó de pell: té
+   vora de baix, baixa en prémer i focus visible. */
+.surrender-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.9rem;
+}
+.surrender {
+  --btn: var(--surface);
+  --btn-shadow: #f3cdce;
+  --btn-text: var(--coral-ink);
+  --focus-ring: var(--focus);
+  min-height: var(--tap);
+  padding: 0.45rem 1.15rem;
+  background: var(--surface);
+  border: 2px solid color-mix(in srgb, var(--coral-deep) 32%, transparent);
+  color: var(--coral-ink);
+  font-weight: 800;
+  font-size: 0.92rem;
+  letter-spacing: 0.01em;
+}
+.surrender:hover:not(:disabled):not(:active) {
+  background: var(--coral-wash);
+  border-color: var(--coral-deep);
+  filter: none;
+}
+.surrender:active:not(:disabled) {
+  border-color: var(--coral-deep);
+  box-shadow: 0 0 0 #f3cdce;
+}
 
 .actions { display: flex; gap: 0.6rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap; }
 .actions > button { flex: 1 1 auto; min-width: 8rem; }
@@ -1736,12 +1792,70 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   margin: 1rem 0;
 }
 
+/* Selector de mode (rànquing i grups). Són set pastilles i l'estat el diu
+   el contorn i el text, no una vora de baix: amb vores, en fila, cada
+   pastilla sembla una lleixa flotant i el fila es llegeix com un mar de
+   gràcies. Per això aquí no hi ha `box-shadow` en cap estat, ni en hover ni
+   premuda: la peça canvia de fons i de contorn. */
 .tabs-modes {
   display: flex;
-  align-content: center;
-  align-items: center;
-  gap: 0.4rem;
   flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45rem;
+  margin: 0.9rem 0 1rem;
+}
+
+.tabs-modes button {
+  --focus-ring: var(--focus);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: var(--tap);
+  padding: 0.45rem 0.85rem;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  color: var(--muted);
+  font-weight: 800;
+  font-size: 0.92rem;
+  box-shadow: none;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.tabs-modes button:hover:not(:disabled):not(:active) {
+  background: var(--bg-soft);
+  border-color: var(--blue-mid);
+  color: var(--text);
+  filter: none;
+  transform: none;
+  box-shadow: none;
+}
+
+.tabs-modes button:active:not(:disabled) {
+  background: var(--bg-soft);
+  transform: none;
+  box-shadow: none;
+}
+
+/* Seleccionada: contorn blau i text blau fosc sobre blanc. L'anell de focus
+   segueix sent blau fosc, com a la resta de l'app. */
+.tabs-modes button[aria-selected="true"] {
+  background: var(--surface);
+  border-color: var(--blue-deep);
+  color: var(--blue-ink);
+  box-shadow: var(--shadow-sm);
+}
+
+.tabs-modes button[aria-selected="true"]:hover:not(:disabled) {
+  background: var(--surface);
+  border-color: var(--blue-deep);
+  filter: none;
+}
+
+.tabs-mark {
+  flex: 0 0 auto;
+  width: 1.45rem;
+  height: 1.45rem;
+  object-fit: contain;
 }
 
 .tabs--segmented {
@@ -1766,14 +1880,26 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   box-shadow: none;
 }
 
+/* Pestanya segmentada: la peça no se sostra, canvia de fons. El botó base
+   posa vora de baix i pujada en hover, i aquí cal desdir-ho: si no, al
+   passar el ratolí apareixia una vora blava sota el segment, perquè la regla
+   genèrica del hover (0,2,1) guanya la del segment (0,1,1). */
 .tabs--segmented button:hover:not(:disabled) {
   background: rgba(31, 41, 51, 0.07);
   filter: none;
+  transform: none;
+  box-shadow: none;
 }
 
 .tabs--segmented button:active:not(:disabled) {
   transform: none;
   box-shadow: none;
+}
+
+/* Premuda, el segment no seleccionat s'enfosqueix una mica: és l'única
+   resposta tàctil que té sentit en un selector. */
+.tabs--segmented button:not([aria-selected="true"]):active:not(:disabled) {
+  background: rgba(31, 41, 51, 0.14);
 }
 
 .tabs--segmented button[aria-selected="true"] {
@@ -1786,6 +1912,9 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
 .tabs--segmented button[aria-selected="true"]:hover:not(:disabled) {
   background: var(--surface);
   filter: none;
+  /* La ombra del segment seleccionat no es perd en hover (la del genèric
+     se l'enduria). */
+  box-shadow: var(--shadow-sm);
 }
 
 .ranking {

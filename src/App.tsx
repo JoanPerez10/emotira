@@ -1,37 +1,37 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import "./App.css";
+import { api } from "./api";
+import type { Session } from "./api/types";
+import AccountScreen from "./components/AccountScreen";
+import AdminPanel from "./components/AdminPanel";
 import Game from "./components/Game";
+import GroupsScreen from "./components/GroupsScreen";
+import GuineuIcon, { type GuineuName } from "./components/GuineuIcon";
+import type { IconName } from "./components/Icon";
+import Icon from "./components/Icon";
 import InverseGame from "./components/InverseGame";
-import TimeTrial, { TimeTrialRules } from "./components/TimeTrial";
 import ProposeForm from "./components/ProposeForm";
-import { puzzles, type Puzzle } from "./data/puzzles";
+import RankingScreen from "./components/RankingScreen";
+import ResultTiles, { DailyTiles } from "./components/ResultTiles";
+import TimeTrial, { TimeTrialRules } from "./components/TimeTrial";
+import VoteScreen from "./components/VoteScreen";
 import { musicPuzzles } from "./data/musicPuzzles";
+import { puzzles, type Puzzle } from "./data/puzzles";
+import { MODES as ALL_MODES, MENU_MODES, MODE_IMAGES, scoreOf, starsFor, MODE_TITLES as TITLES } from "./modes";
 import type { GameResult, Mode, Records } from "./types";
 import { dailyPuzzles, todayKey } from "./utils/daily";
+import { firstGrapheme } from "./utils/graphemes";
 import { shuffle } from "./utils/random";
-import { TRIAL_WIN_AT } from "./utils/timeTrial";
 import {
   currentStreak,
   emptyRecords,
   loadRecords,
+  normalizeRecords,
   recordResult,
   saveRecords,
   unlockTown,
-  normalizeRecords,
 } from "./utils/storage";
-import "./App.css";
-import { api } from "./api";
-import AdminPanel from "./components/AdminPanel";
-import VoteScreen from "./components/VoteScreen";
-import AccountScreen from "./components/AccountScreen";
-import GroupsScreen from "./components/GroupsScreen";
-import RankingScreen from "./components/RankingScreen";
-import type { Session } from "./api/types";
-import { MODES as ALL_MODES, MODE_TITLES as TITLES, MODE_ICONS, MODE_IMAGES, scoreOf, starsFor, MENU_MODES } from "./modes";
-import { firstGrapheme } from "./utils/graphemes";
-import GuineuIcon, { type GuineuName } from "./components/GuineuIcon";
-import Icon from "./components/Icon";
-import ResultTiles, { DailyTiles } from "./components/ResultTiles";
-import type { IconName } from "./components/Icon";
+import { TRIAL_WIN_AT } from "./utils/timeTrial";
 
 // El mapa de municipis pesa ~125 KB: només es descarrega en obrir la Col·lecció
 const Collection = lazy(() => import("./components/Collection"));
@@ -244,7 +244,7 @@ export default function App() {
       <Game
         key={`${mode}-${deck.length}-${deck[0]?.answer}`}
         title={TITLES[mode]}
-        icon={MODE_ICONS[mode]}
+        iconSrc={MODE_IMAGES[mode]}
         deck={deck}
         pool={mode === "music" ? musicPuzzles : pool}
         endless={mode === "infinite"}
