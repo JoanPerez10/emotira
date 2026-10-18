@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import DevBanner from "./components/DevBanner.tsx";
+import PawSwarm from "./components/PawSwarm.tsx";
 import flagFontUrl from "country-flag-emoji-polyfill/dist/TwemojiCountryFlags.woff2?url";
 
 // Banderes: sempre, sense detector. El polyfill del paquet només
@@ -23,6 +24,9 @@ document.head.appendChild(flagFont);
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <DevBanner />
+    {/* Decoració de fons: les petjades que balancegen. No té res a veure amb
+        el joc, va per sobre de tota l'aplicació i és inert per al ratolí. */}
+    <PawSwarm />
     <App />
   </StrictMode>,
 )

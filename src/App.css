@@ -135,10 +135,12 @@ body {
   font-family: "Twemoji Country Flags", "Nunito Variable", "Nunito", ui-rounded, "Segoe UI Variable", system-ui,
     "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Symbol",
     -apple-system, "Segoe UI", Roboto, sans-serif;
-  /* El fons no és un color pla: hi ha dues llums molt suaus —taronja a
-     dalt a l'esquerra, blava a dalt a la dreta— que donen profunditat i
-     recorden els dos colors de la guineu. Són tan fines que el text no
-     hi perd contrast. */
+  /* El fons no és un color pla: hi ha tres llums de color —taronja, blava i
+     préssoc— que donen profunditat i recorden els colors de la guineu. Van
+     fixes, perquè el fons no «segueixi» el text en fer scroll. L'embolcallat
+     de petjades és una capa a part, la de `body::before` més avall, que és
+     la que es mou. Les dues coses són decoratives i molt tènues perquè el
+     text no hi perdi contrast. */
   background-color: var(--bg);
   background-image:
     radial-gradient(42rem 30rem at 8% -8%, rgba(249, 107, 37, 0.1), transparent 62%),
@@ -149,6 +151,58 @@ body {
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   -webkit-text-size-adjust: 100%;
+}
+
+/* ============================================================
+   Petjades de fons (src/components/PawSwarm.tsx)
+   El paper està en **graella**: una casella per petjada, totes iguals, com un
+   paper pintat. El component calcula files i columnes segons la finestra, de
+   manera que el paper quedi ple tant en un mòbil estret com en un monitor
+   ample.
+
+   Dins de la casella, cada petjada gira **sobre ella mateixa**, amb l'eix al
+   seu propi peu, i té la seva pròpia animació: el vent les mou una per una.
+   No es pot fer amb un `background-image` repetit perquè allò el que es mou és
+   el paper sencer, que lliscaria en bloc.
+
+   El balanceig és de ±22°: mig gir ample, mai una volta sencera. Amb
+   `ease-in-out` s'atura als extrems, que és el que el fa llegir com un
+   balancei i no com una cinta transportadora. Els retards negatius són el que
+   fa que no vagin totes alhora.
+   ============================================================ */
+.paws {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  /* Centrada dins de la casella; l'esbiaitada fina la posa `--paw-x/y`. */
+  place-items: center;
+  overflow: hidden;
+  pointer-events: none;
+  /* Damunt de les llums de color del cos, però sota el contingut: cap
+     decoració ha de quedar per sobre d'un botó. */
+  z-index: -1;
+}
+
+.paw {
+  aspect-ratio: 1;
+  translate: var(--paw-x, 0) var(--paw-y, 0);
+  transform-origin: 50% 72%;
+  /* El gir propi, el balancei al voltant i el mirall, tot en l'estil en
+     línia que posa el component. */
+  transform: rotate(var(--paw-gir, 0deg)) scaleX(var(--paw-flip, 1));
+  animation: paw-balan var(--paw-dur, 9s) ease-in-out var(--paw-retard, 0s) infinite alternate;
+  will-change: transform;
+}
+.paw img { width: 100%; height: 100%; display: block; }
+
+@keyframes paw-balan {
+  from { rotate: -22deg; }
+  to   { rotate: 22deg; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Les petjades es queden quietes: un fons que es mou sol no s'imposa. */
+  .paw { animation: none; }
 }
 
 h1, h2, h3 {
