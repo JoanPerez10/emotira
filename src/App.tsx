@@ -28,11 +28,17 @@ import RankingScreen from "./components/RankingScreen";
 import type { Session } from "./api/types";
 import { MODES as ALL_MODES, MODE_TITLES as TITLES, MODE_ICONS, MODE_IMAGES, scoreOf, starsFor, MENU_MODES } from "./modes";
 import { firstGrapheme } from "./utils/graphemes";
+import GuineuIcon, { type GuineuName } from "./components/GuineuIcon";
 import Icon from "./components/Icon";
+import ResultTiles, { DailyTiles } from "./components/ResultTiles";
 import type { IconName } from "./components/Icon";
 
 // El mapa de municipis pesa ~125 KB: només es descarrega en obrir la Col·lecció
 const Collection = lazy(() => import("./components/Collection"));
+
+/** «1 poble» o «5 pobles». El plural no és un detall: un text que digui
+ *  «1 pobles» fa que tota la frase sembli errònia. */
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 type Screen =
   | "menu"
@@ -51,32 +57,28 @@ type Screen =
 
 /** Les entrades que no són modes. `sub` és el text que surt a la targeta: una
  *  paraula sola deixava la caixa buida, i el títol + frase és el que fa que
- *  la targeta sembli proucosa. `tone` només pintar la icona: la targeta es
- *  queda blanca i el color, concentrat, és el que fa de senyal.
+ *  la targeta sembli proucosa.
  *
- *  Els rècords hi són perquè són dades teves i hi arribes sense compte: dins
- *  del perfil quedaven enterrats sota el formulari de registre, i com a
- *  convidat eren pràcticament inaccessibles. */
-const MENU_LINKS: {
-  icon: IconName;
+ *  Cada entrada porta un sol dibuix: `art` per als dibuixos de la guineu
+ *  (imatge) i `icon` per a les icones SVG de traç. `tone` només pintar la
+ *  icona SVG: la targeta es queda blanca i, quan el dibuix és de la guineu,
+ *  el color ja l'porta ell mateix.
+ *
+ *  Els rècords NO hi són: són dades del compte i viuen al perfil
+ *  (AccountScreen), que només es veu un cop identificat. Aquí només hi ha
+ *  allò que té sentit sense compte. */
+type MenuLink = {
   label: string;
   sub: string;
   screen: Screen;
   tone: "blue" | "gold" | "green" | "coral";
-  wide?: boolean;
-}[] = [
+} & ({ art: GuineuName; icon?: never } | { icon: IconName; art?: never });
+
+const MENU_LINKS: MenuLink[] = [
   { icon: "map", label: "Col·lecció", sub: "Pobles trobats", screen: "collection", tone: "blue" },
-  { icon: "crown", label: "Rànquing", sub: "Qui encerta més", screen: "ranking", tone: "gold" },
-  { icon: "users", label: "Grups", sub: "Juga amb amics", screen: "groups", tone: "green" },
-  { icon: "ballot", label: "Propostes", sub: "Vota i proposa", screen: "vote", tone: "coral" },
-  {
-    icon: "chart",
-    label: "Els teus rècords",
-    sub: "Millor resultat de cada mode",
-    screen: "records",
-    tone: "blue",
-    wide: true,
-  },
+  { art: "ranking", label: "Rànquing", sub: "Qui encerta més", screen: "ranking", tone: "gold" },
+  { art: "group", label: "Grups", sub: "Juga amb amics", screen: "groups", tone: "green" },
+  { art: "vote", label: "Propostes", sub: "Vota i proposa", screen: "vote", tone: "coral" },
 ];
 
 export default function App() {
@@ -263,24 +265,32 @@ export default function App() {
     const stars = starsFor(result.score, result.max);
     const isDaily = mode === "daily";
     const isTrial = mode === "timeTrial";
-    const skipped = result.results.filter((r) => r.reason === "skipped").length;
-    const failed = result.results.filter((r) => r.reason === "failed").length;
+    const total = result.results.length;
+    // El mode de música juga amb grups, no amb pobles: el comptador parla del que
+    // s'ha jugat, i barrejar els dos noms fa que el text no vulgui dir res.
+    const noun = mode === "music" ? "grup" : "poble";
     // La guineu reactiona: emoció. Les estrelles: precisió. Abans hi havia també
     // la medalla 🏆/🥈/🥉, que duplicava la mateixa informació que les estrelles.
     const won = isTrial ? solved >= TRIAL_WIN_AT : stars >= 2;
-    // Al contrarellotge el compte és de pobles (encert / saltat / fallat); a la
-    // resta, de punts. Un mateix lloc, dos recomptes. Les estrelles no hi
-    // surten: ja es veuen a sobre i seria repetir la mateixa dada.
-    const stats = isTrial
-      ? [
-          { value: solved, label: "encerts" },
-          { value: skipped, label: "saltats" },
-          { value: failed, label: "fallats" },
-        ]
-      : [
-          { value: `${result.score}/${result.max}`, label: "punts" },
-          { value: `${solved}/${result.results.length}`, label: "pobles" },
-        ];
+    // La ratxa només existeix al repte diari. A la resta de modes no hi ha res
+    // a què mirar-hi, i un text sobre la ratxa en un mode que no en té seria
+    // una xifra inventada: per això la targeta no hi surt.
+    const streak = currentStreak(records);
+    const streakCopy =
+      streak === 0
+        ? { title: "Encara no tens ratxa", sub: "Juga el repte diari per començar-ne una" }
+        : streak === 1
+          ? { title: "Ratxa d'1 dia", sub: "Demà pots fer créixer la ratxa!" }
+          : { title: `Ratxa de ${streak} dies`, sub: "Juga el repte diari demà per no perdre-la" };
+    // El repart es llegeix d'una sola línia sota els quadrats: al contrarellotge
+    // el compte és de pobles i no hi ha un total fix de punts, a la resta el que
+    // importa és la puntuació.
+    const summary = isTrial
+      ? `${plural(total, noun, `${noun}s`)} · ${plural(solved, "encert", "encerts")}`
+      : `${solved}/${plural(total, noun, `${noun}s`)} · ${result.score}/${result.max} punts`;
+    // Compartir només té sentit al repte diari: el que es copia és el resultat
+    // d'avui. Sense resultat desat, el botó és «Tornar a jugar».
+    const canShare = isDaily && !!todayResult;
     return (
       <main className={`app result${won ? " is-win" : " is-lose"}`}>
         <div className="score-card">
@@ -307,15 +317,6 @@ export default function App() {
             </p>
           )}
 
-          <ul className="result-stats">
-            {stats.map((s) => (
-              <li key={s.label}>
-                <b>{s.value}</b>
-                <span>{s.label}</span>
-              </li>
-            ))}
-          </ul>
-
           {isTrial && <p className="result-note">Temps esgotat!</p>}
           {isBest && (
             <p className="best">
@@ -324,22 +325,43 @@ export default function App() {
           )}
         </div>
 
-        {isDaily && todayResult && (
-          <>
-            <p className="emojis small">{todayResult.results}</p>
-            <div className="actions">
-              <button onClick={share}>
-                <Icon name={copied ? "check" : "share"} size={18} />
-                {copied ? "Copiat" : "Compartir el resultat"}
-              </button>
-            </div>
-            <p className="streak">Ratxa: {currentStreak(records)} dies</p>
-          </>
+        {/* Un quadrat per poble i, a sota, què val la partida. Els quadrats
+            són el que eren els 🟩🟨🟥 del text compartit, amb els mateixos
+            colors però dibuixats per nosaltres i no per la font d'emoji de
+            l'aparell. */}
+        <section className="result-strip">
+          <ResultTiles results={result.results} noun={noun} />
+          <p className="result-summary">{summary}</p>
+        </section>
+
+        {isDaily && (
+          <button type="button" className="streak-card" onClick={() => setScreen("records")}>
+            <span className="streak-badge"><Icon name="flame" size={20} /></span>
+            <span className="streak-copy">
+              <strong>{streakCopy.title}</strong>
+              <span>{streakCopy.sub}</span>
+            </span>
+            <Icon name="chevron" size={18} className="streak-chevron" />
+          </button>
         )}
 
-        <div className="actions">
-          {!isDaily && <button onClick={() => start(mode)}>Tornar a jugar</button>}
-          <button className="secondary" onClick={() => setScreen("menu")}>Menú</button>
+        <div className="actions actions-stack">
+          {canShare ? (
+            <button onClick={share}>
+              {copied ? (
+                <>
+                  <GuineuIcon name="check" size={20} /> Copiat
+                </>
+              ) : (
+                <>
+                  <Icon name="share" size={18} /> Compartir resultat
+                </>
+              )}
+            </button>
+          ) : (
+            <button onClick={() => start(mode)}>Tornar a jugar</button>
+          )}
+          <button className="outline" onClick={() => setScreen("menu")}>Tornar al menú</button>
         </div>
       </main>
     );
@@ -374,6 +396,7 @@ export default function App() {
         onGoToRanking={() => setScreen("ranking")}
         onGoToGroups={() => setScreen("groups")}
         onGoToRecords={() => setScreen("records")}
+        onResetRecords={resetRecords}
       />
     );
   }
@@ -474,13 +497,6 @@ export default function App() {
           <p>Millor puntuació: <b>{music.best} / 30</b></p>
           <p>Partides: <b>{music.played}</b></p>
         </section>
-        {/* El retorn al menú ja hi és a la barra superior: aquí només
-            l'acció destructiva, que no es pot posar al costat de l'ull. */}
-        <div className="actions">
-          {!session && (
-            <button className="danger-text" onClick={resetRecords}>Esborrar tots els rècords</button>
-          )}
-        </div>
       </main>
     );
   }
@@ -501,38 +517,28 @@ export default function App() {
         <div className="hero-copy">
           <h1>Emotira</h1>
           <p>Endevina què és amb només emojis</p>
-          {/* Les tres xapes són botons i, per tant, tenen la mateixa peça i la
-              mateixa vora de baix que la resta. Abans les dues primeres
-              eren text i això es llegia com si estiguessin trencades:
-              la ratxa obre el repte del dia i els pobles, la col·lecció. */}
+          {/* La ratxa i els pobles són indicadors: només mostren dades i no
+              tenen cap acció, així que no es toquen i no porten vora de baix.
+              El compte sí que és un botó, i per això conserva la peça de
+              botó i la vora que fa que es llegeixi com a acció. */}
           <div className="hero-stats">
-            <button
-              type="button"
-              className="hero-stat"
-              onClick={() => start("daily")}
-              title="Jugar el repte d'avui"
-            >
+            <div className="hero-stat">
               <span className="hero-stat-icon v-gold"><Icon name="flame" size={18} /></span>
               <b>{streak}</b>
               <span>{streak === 1 ? "dia" : "dies"}</span>
-            </button>
-            <button
-              type="button"
-              className="hero-stat"
-              onClick={() => setScreen("collection")}
-              title="Obre la col·lecció de pobles"
-            >
+            </div>
+            <div className="hero-stat">
               <span className="hero-stat-icon v-orange"><Icon name="map" size={18} /></span>
               <b>{found}</b>
               <span>{found === 1 ? "poble" : "pobles"}</span>
-            </button>
+            </div>
             <button
               type="button"
-              className="hero-stat"
+              className="hero-stat is-button"
               onClick={() => setScreen("account")}
               title="Gestiona el teu compte"
             >
-              <span className="hero-stat-icon v-blue"><Icon name="user" size={18} /></span>
+              <span className="hero-stat-icon v-blue"><GuineuIcon name="profile" size={21} /></span>
               <b>{session ? session.username : "Convidat"}</b>
               <span>{session ? "el teu compte" : "entra o crea"}</span>
             </button>
@@ -551,7 +557,7 @@ export default function App() {
                 {todayResult.score}/{todayResult.max}
               </span>
             </div>
-            <p className="daily-squares">{todayResult.results}</p>
+            <DailyTiles glyphs={todayResult.results} />
             <button type="button" className="share-btn" onClick={share}>
               <span className={"mode-icon mode-icon-image"}>
                 <img src="/assets/repte-diari-guineu.png" alt="" width={1254} height={1254} draggable={false} />
@@ -597,17 +603,17 @@ export default function App() {
       {/* ── Descobreix i comunitat ──
           Dins del mateix contenidor que les targetes: un sol `gap`
           governa tots els blocs i el ritme no es pot desincronitzar. */}
-      <h2 className="menu-h">
-        <Icon name="compass" size={13} /> Descobreix i comunitat
-      </h2>
+      <h2 className="menu-h">Descobreix i comunitat</h2>
       <ul className="link-grid">
         {MENU_LINKS.map((item) => (
           <li key={item.label}>
-<button
-              className={`link-tile t-${item.tone}${item.wide ? " is-wide" : ""}`}
+            <button
+              className={`link-tile t-${item.tone}`}
               onClick={() => setScreen(item.screen)}
             >
-              <span className="link-icon"><Icon name={item.icon} size={22} /></span>
+              <span className="link-icon">
+                {item.art ? <GuineuIcon name={item.art} size={28} /> : <Icon name={item.icon} size={22} />}
+              </span>
               <span className="link-tile-body">
                 <span className="link-tile-label">{item.label}</span>
                 <span className="link-tile-sub">{item.sub}</span>

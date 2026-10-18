@@ -4,6 +4,7 @@ import type { Session } from "../api/types";
 import type { Records } from "../types";
 import { currentStreak } from "../utils/storage";
 import Icon from "./Icon";
+import GuineuIcon from "./GuineuIcon";
 
 const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/;
 
@@ -14,6 +15,7 @@ export default function AccountScreen({
   onGoToRanking,
   onGoToGroups,
   onGoToRecords,
+  onResetRecords,
 }: {
   session: Session | null;
   records: Records;
@@ -21,6 +23,7 @@ export default function AccountScreen({
   onGoToRanking?: () => void;
   onGoToGroups?: () => void;
   onGoToRecords?: () => void;
+  onResetRecords?: () => void;
 }) {
   const [tab, setTab] = useState<"login" | "signup">("login");
   const [username, setUsername] = useState("");
@@ -33,7 +36,7 @@ export default function AccountScreen({
   const header = (
     <div className="topbar">
       <button className="back" onClick={onExit}>← Menú</button>
-      <strong>👤 Compte</strong>
+      <strong className="topbar-title"><GuineuIcon name="profile" size={22} /> Compte</strong>
     </div>
   );
 
@@ -93,22 +96,23 @@ export default function AccountScreen({
       <main className="app">
         {header}
         <div className="card">
-          <p className="big">👤 {session.username}</p>
+          <p className="big"><GuineuIcon name="profile" size={34} /> {session.username}</p>
           <p className="progress">{session.email}</p>
           {session.isAdmin && <p className="chip chip-fire">Administrador</p>}
           <p className="help">Els teus rècords es guarden al compte i surts als rànquings.</p>
         </div>
 
         <section className="card">
-          <h3>🏆 Rècords del jugador</h3>
+          <h3 className="topbar-title"><GuineuIcon name="ranking" size={24} /> Rècords del jugador</h3>
           <div className="chips">
             <span className="chip chip-fire">Ratxa: {streak} {streak === 1 ? "dia" : "dies"}</span>
             <span className="chip chip-map">{found} {found === 1 ? "poble" : "pobles"} trobats</span>
           </div>
 
           {/* El perfil no repeteix les xifres de cada mode: la llista completa viu
-            a la pantalla «Els teus rècords», que és al menú i s'hi arriba
-            sense compte. Aquí només el resum i les portes de sortida. */}
+            a la pantalla «Els teus rècords», que és aquí al costat i només
+            s'obre amb compte. Sense sessió no hi ha res a veure: són dades
+            del compte. Aquí només el resum i les portes de sortida. */}
           <div className="actions">
             {onGoToRecords && (
               <button className="ghost" onClick={onGoToRecords}>
@@ -122,7 +126,7 @@ export default function AccountScreen({
             )}
             {onGoToGroups && (
               <button className="secondary" onClick={onGoToGroups}>
-                👥 Els meus grups
+                <GuineuIcon name="group" size={20} /> Els meus grups
               </button>
             )}
           </div>
@@ -153,9 +157,9 @@ export default function AccountScreen({
         </div>
       )}
 
-      {/* Sense compte, els rècords no són aquí: són a la pantalla «Els teus
-          rècords» del menú, que s'hi arriba sense entrar. Aquesta pantalla
-          és per crear compte o entrar-hi. */}
+      {/* Sense compte no hi ha «Els teus rècords»: són dades del compte i a
+          dalt no apareixen. Aquesta pantalla és per crear compte o entrar-hi,
+          i per esborrar el que es queda en aquest dispositiu. */}
       {api.loginHint && <p className="help">🧪 {api.loginHint}</p>}
 
       <div className="tabs tabs--segmented" role="tablist">
@@ -193,6 +197,14 @@ export default function AccountScreen({
         </button>
       </form>
       <p className="help">Només guardem el nom d'usuari, el correu i els teus rècords. Pots esborrar el compte quan vulguis.</p>
+
+      {/* Sense compte, els rècords només viuen en aquest dispositiu: l'esborrada
+          es fa des d'aquí, on el convidat pot veure què és el que esborra. */}
+      {onResetRecords && (
+        <div className="actions">
+          <button className="ghost danger-text" onClick={onResetRecords}>Esborrar tots els rècords</button>
+        </div>
+      )}
     </main>
   );
 }

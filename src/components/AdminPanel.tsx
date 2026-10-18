@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
 import type { Decision, Proposal, Session, Tally } from "../api/types";
 import { COMARQUES } from "../data/comarques";
+import GuineuIcon from "./GuineuIcon";
 
 function Card({
   row,
@@ -50,10 +51,12 @@ function Card({
         placeholder="Escala, L’Escala" />
 
       <div className="actions">
-        <button disabled={busy || !comarca} onClick={() => decide("accepted")}>✅ Acceptar</button>
+        <button disabled={busy || !comarca} onClick={() => decide("accepted")}>
+            <GuineuIcon name="check" size={18} /> Acceptar
+          </button>
         {row.status === "pending" && (
           <button className="secondary" disabled={busy} onClick={() => decide("voting")}>
-            🗳️ A votació
+            <GuineuIcon name="vote" size={18} /> A votació
           </button>
         )}
         <button className="ghost" disabled={busy} onClick={() => decide("rejected")}>

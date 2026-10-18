@@ -6,6 +6,7 @@ import { shuffle } from "../utils/random";
 import type { Puzzle } from "../data/puzzles";
 import { parseWords } from "../utils/words";
 import LetterInput, { type LetterInputHandle } from "./LetterInput";
+import GuineuIcon from "./GuineuIcon";
 import Icon, { type IconName } from "./Icon";
 
 type Status = "playing" | "correct" | "revealed";
@@ -189,11 +190,9 @@ export default function Game({
           {endless ? `Ratxa: ${run} · ${score} punts` : `${title === "Música" ? "Grup" : "Poble"} ${index + 1} de ${deck.length}`}
         </span>
         {hard && (
-          <span className="hearts" aria-label={`Intents restants: ${MAX_FAILS - fails}`}>
+          <span className="hearts" role="img" aria-label={`Intents restants: ${MAX_FAILS - fails}`}>
             {Array.from({ length: MAX_FAILS }, (_, i) => (
-              <span key={i} className={i < fails ? "heart-lost" : undefined} aria-hidden="true">
-                ❤️
-              </span>
+              <GuineuIcon key={i} name={i < fails ? "lifeDown" : "lifeUp"} size={22} />
             ))}
           </span>
         )}

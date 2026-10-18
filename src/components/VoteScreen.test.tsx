@@ -47,7 +47,7 @@ describe('VoteScreen component', () => {
     render(<VoteScreen onExit={handleExit} />)
 
     expect(screen.getByText('Carregant…')).toBeInTheDocument()
-    expect(screen.getByText('🗳️ Vota propostes')).toBeInTheDocument()
+    expect(screen.getByText('Vota propostes')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: '← Menú' }))
     expect(handleExit).toHaveBeenCalledTimes(1)
@@ -190,6 +190,6 @@ describe('VoteScreen component', () => {
     localStorage.setItem(key, '{corrupted-json')
 
     render(<VoteScreen onExit={vi.fn()} />)
-    expect(screen.getByText('🗳️ Vota propostes')).toBeInTheDocument()
+    expect(screen.getByText('Vota propostes')).toBeInTheDocument()
   })
 })

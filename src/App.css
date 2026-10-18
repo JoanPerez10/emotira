@@ -1,6 +1,7 @@
 /* ============================================================
    Emotira · sistema de disseny
-   paleta de marca: blaus + taronja + daurat. El color viu decora,
+   El color principal és el taronja de la guineu; al voltant, blaus
+   per a l'acció i el daurat per a les recompenses. El color viu decora,
    els tons "ink/deep" porten el text (contrast AA a tots).
    ============================================================ */
 
@@ -28,7 +29,7 @@
 :root {
   color-scheme: light;
 
-  /* ── Blaus (marca, acció principal) ───────────────────── */
+  /* ── Blaus (secundari: acció, icones, enllaços) ─────────── */
   --blue:        #276cdc;  /* decoració: icones, brillants */
   --blue-mid:    #1a5ece;  /* estats hover */
   --blue-deep:   #1857c7;  /* botons: 6.51:1 amb blanc */
@@ -36,11 +37,11 @@
   --blue-ink:    #14346e;  /* text blau sobre fons clar: 10.49:1 */
   --blue-wash:   #e9f0fb;  /* fons de targeta/superfície tova */
 
-  /* ── Taronja (accent de marca, la guineu) ─────────────── */
+  /* ── Taronja (color principal de marca, la guineu) ───────── */
   --orange:      #f96b25;  /* decoració i grans fons */
   --orange-deep: #b84f1b;  /* botó: 5.03:1 amb blanc */
   --orange-shadow:#8f3d14;
-  --orange-ink:  #8f3d14;  /* text sobre fons clar: 5.4:1 */
+  --orange-ink:  #8f3d14;  /* text sobre fons clar: 6.9:1 */
   --orange-wash: #fdeadd;
 
   /* ── Daurat (recompenses, ratxa, guinyó) ───────────────── */
@@ -108,6 +109,11 @@
      agrupar-se amb el seu contingut. */
   --space: 0.75rem;
   --menu-gap: var(--space);
+
+  /* Alçada mínima de les dues targetes grans del menú (repte diari i
+     banner dels modes). Sónen germans i han de dibuixar la mateixa
+     caixa: el contingut que hi va de debò és el que mana. */
+  --big-card-min: 10.5rem;
 }
 
 /* ── Base ───────────────────────────────────────────────── */
@@ -200,6 +206,21 @@ p { line-height: 1.5; }
   clip-path: inset(50%);
 }
 
+/* ── Icones de la guineu ─────────────────────────────────── */
+/* Són imatges amb la proporció del dibuix: el component fixa l'alçada i
+   l'amplada surt de la imatge, de manera que cap urna es veu estreta ni cap
+   cor ample. `flex: 0 0 auto` evita que les estiri la fila que les encua, i
+   `pointer-events` que el cursor del botó no depengui de si hi ha un dibuix a
+   sobre del text. */
+.guineu {
+  display: inline-block;
+  vertical-align: -0.15em;
+  flex: 0 0 auto;
+  object-fit: contain;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
 /* ── Tipografia de suport ───────────────────────────────── */
 .big { font-size: clamp(2rem, 8vw, 2.75rem); font-weight: 900; margin: 0.25rem 0; }
 .progress { color: var(--muted); font-weight: 700; margin: 0.35rem 0; }
@@ -243,14 +264,15 @@ p { line-height: 1.5; }
   from { opacity: 0; transform: scale(0.85) translateY(4px); }
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
-.best, .streak { color: var(--blue-ink); font-weight: 800; }
-.best, .streak {
+.best {
+  color: var(--blue-ink);
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
 }
-.best svg, .streak svg, .stats h3 svg { flex: 0 0 auto; }
+.best svg, .stats h3 svg { flex: 0 0 auto; }
 .help { color: var(--muted); font-size: 0.9rem; margin: 0.3rem 0 0; }
 
 /* ── Botons "3D" (estil Duolingo) ───────────────────────── */
@@ -303,7 +325,7 @@ button:disabled {
 
 /* Botó pla: menys pes visual, per a accionsomials */
 /* Botons de fons clar: l'anell de focus ha de ser fosc per veure's. */
-.ghost, .back, .share-btn, .mode-card, .letters-native {
+.ghost, .back, .share-btn, .mode-card, .hero-stat.is-button, .letters-native {
   --focus-ring: var(--focus);
 }
 /* Botó discret:Blanc, sense omra de color, però amb vora de baix com
@@ -336,8 +358,27 @@ button:disabled {
 }
 .danger-text:hover:not(:disabled) { background: #ffdada; filter: none; }
 
+/* Botó contornat: la mateixa peça amb menys pes, per a l'acció que sempre va
+   al costat de la principal («Tornar al menú»). Text taronja sobre fons clar
+   (6.9:1) i contorn taronja, amb el focus fosc perquè es vegi sobre crema. */
+.outline {
+  --btn: transparent;
+  --btn-shadow: var(--orange);
+  --btn-text: var(--orange-ink);
+  --focus-ring: var(--focus);
+  background: transparent;
+  border: 2px solid var(--orange);
+}
+.outline:hover:not(:disabled) { background: var(--orange-wash); filter: none; }
+.outline:active:not(:disabled) { box-shadow: 0 0 0 var(--orange); }
+
 .actions { display: flex; gap: 0.6rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap; }
 .actions > button { flex: 1 1 auto; min-width: 8rem; }
+/* Accions apilades i a ampleada completa: una acció principal que ocupa tota
+   la fila i, a sota, la de sortida. Una columna i no files perquè el text
+   llarg («Tornar al menú») no quedi estret al costat de l'acció principal. */
+.actions-stack { flex-direction: column; align-items: stretch; }
+.actions-stack > button { width: 100%; min-width: 0; }
 
 /* ── Formularis ─────────────────────────────────────────── */
 input, select {
@@ -590,18 +631,22 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
    La peça de les grans targetes del menú
    El menú té dos tipus de peça, i la diferència és intencionada:
 
-   · **Botons** (repte diari, banner de modes, xapes del capçalera,
-     targetes de mode, entrades del menú): es poden prémer, i una peça
-     que es pot prémer **té sempre vora a sota** —la mateixa de 4 px
-     que porten els botons de l'app—. Sense aquesta vora la peça sembla
+   · **Botons** (repte diari, banner de modes, targetes de mode,
+     entrades del menú): es poden prémer, i una peça que es pot
+     prémer **té sempre vora a sota** —la mateixa de 4 px que
+     porten els botons de l'app—. Sense aquesta vora la peça sembla
      un indicador, que no és el que volem dir. En prémer, baixa i la
      vora desapareix.
 
-   · **Indicadors** (xifres soltes, targetes de resultat, targetes de
-     la col·lecció): només mostren dades, i no en porten.
+   · **Indicadors** (xapes de ratxa i pobles, xifres soltes,
+     targetes de resultat, targetes de la col·lecció): només mostren
+     dades, no es toquen i no en porten.
 
-   El color, mentrestant, viu a la icona i no a la peça, i mai hi ha
-   cap icona amb fons de color al darrere: les icones són planes.
+   El color, mentrestant, viu a la icona i no a la peça.
+
+   Les dues targetes grans comparteixen alçada (`--big-card-min`):
+   el repte diari i el banner dels modes són germans i, amb el mateix
+   contingut, han de passar la ratlla junts.
    ============================================================ */
 .daily-card,
 .modes-banner {
@@ -609,6 +654,7 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   border: 0;
   border-radius: var(--r-lg);
   gap: 0.5rem;
+  min-height: var(--big-card-min);
   box-shadow: 0 4px 0 var(--card-lip);
   transition: transform 0.08s ease, box-shadow 0.08s ease;
 }
@@ -618,20 +664,20 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   box-shadow: 0 0 0 var(--card-lip);
 }
 
-/* Botons blancs: mateixa vora de baix que els de color, però del to del
-   fons, que és el que fa que tots els botons es llegeixin igual. */
-.hero-stat,
+/* Targetes blaques que sí que es prémen: contorn de 2 px —la mateixa
+   grossor que els inputs, que són l'altre lloc on hi ha text— i vora de
+   baix del to del fons, que és el que fa que tots els botons es
+   llegeixin igual. */
 .mode-card,
 .link-tile {
   padding: 1rem;
-  border: 1px solid var(--line);
+  border: 2px solid var(--line);
   border-radius: var(--r-md);
   gap: 0.5rem;
   background: var(--surface);
   box-shadow: 0 3px 0 var(--line);
   transition: transform 0.08s ease, box-shadow 0.08s ease, border-color 0.12s ease, background 0.15s ease;
 }
-.hero-stat:active:not(:disabled),
 .mode-card:active:not(:disabled),
 .link-tile:active:not(:disabled) {
   transform: translateY(3px);
@@ -639,9 +685,9 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   border-color: var(--accent, var(--blue));
 }
 
-/* Targeta de mode: blanca, amb vora fina i sense ombra forta. El color
-   el porta la guineu, que és una imatge plana i de color; la targeta no
-   fa cap soroll afegit. */
+/* Targeta de mode: blanca, amb contorn i vora de baix del to del fons, i
+   sense ombra forta. El color el porta la guineu, que és una imatge plana
+   i de color; la targeta no fa cap soroll afegit. */
 .mode-card {
   --accent: var(--blue-deep);
   --tint: var(--blue-wash);
@@ -690,6 +736,9 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  /* El contingut es reparteix per tota la caixa compartida amb el banner
+     dels modes: en compte de deixar el buit a sota. */
+  justify-content: space-between;
   width: 100%;
   text-align: left;
   background: linear-gradient(145deg, #ff8040 0%, var(--orange) 30%, var(--orange-deep) 70%, #7a3210 100%);
@@ -701,12 +750,15 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   display: grid;
   place-items: center;
   flex: 0 0 auto;
-  width: 2.4rem;
-  height: 2.4rem;
-  /* Sense fons: la icona ja és de color i un requadre al darrere
-     l'enfossava. */
+  width: 2.6rem;
+  height: 2.6rem;
+/* Fons blanc tou al darrere: separa la guineu del taronja fosc de la
+     targeta i li dona el mateix quadrat suau que el requadre de la
+     capçalera dels modes. */
+  border-radius: var(--r-sm);
+  background: rgba(255, 255, 255, 0.22);
 }
-.daily-title { font-weight: 800; font-size: 1.3rem; line-height: 1.15; flex: 1; letter-spacing: -0.02em; }
+.daily-title { font-weight: 800; font-size: 1.35rem; line-height: 1.15; flex: 1; letter-spacing: -0.02em; }
 .daily-badge {
   padding: 0.2rem 0.6rem;
   border-radius: var(--r-pill);
@@ -754,12 +806,17 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   flex: 0 0 auto;
   width: 2.6rem;
   height: 2.6rem;
+  /* Mateix requadre tou que la icona del repte diari: les dues targetes
+     són germans i han de llegir-se igual. */
+  border-radius: var(--r-sm);
+  background: rgba(255, 255, 255, 0.22);
 }
 .modes-title { flex: 1; font-weight: 800; font-size: 1.35rem; line-height: 1.15; letter-spacing: -0.02em; }
 .modes-chevron { flex: 0 0 auto; opacity: 0.85; }
 /* Les icones dels modes, com a endevinalla del que hi ha a sota: la
-   fila té l'alçada de la fila inferior de la targeta del repte diari. */
-.modes-preview { display: flex; align-items: center; gap: 0.65rem; min-height: 3.75rem; }
+   fila té l'alçada de la fila inferior de la targeta del repte diari i
+   s'estén per omplir la caixa, que és compartida. */
+.modes-preview { display: flex; align-items: center; gap: 0.65rem; min-height: 3.75rem; flex: 1; }
 .modes-preview img {
   width: 3rem;
   height: 3rem;
@@ -781,9 +838,10 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
 }
 
 /* ── Xapa d'estadístiques del capçalera ──
-   Les tres xapes són botons: la ratxa obre el repte del dia, els pobles
-   obren la col·lecció i el compte obre el perfil. Totes tres amb la mateixa
-   peça i la mateixa vora de baix, que és el que les fa llegir iguals. */
+   Tres peces del mateix cos i tres papers diferents. La ratxa i els
+   pobles són indicadors: no s'hi pot fer res, no es toquen i, per tant,
+   no porten vora de baix (la vora és el senyal de «es pot prémer»). El
+   compte sí que obre el perfil, i conserva la vora. */
 .hero-stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -799,8 +857,19 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   /* Xapa petita: el `padding` del bloc comú és per a targetes grans i
      aquí espatbarraria el nom d'usuari. */
   padding: 0.5rem 0.25rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
   color: var(--text);
 }
+/* L'única de les tres que és botó: mateixa caixa, però amb la vora de
+   baix que fa que es llegeixi com a acció. */
+.hero-stat.is-button {
+  box-shadow: 0 3px 0 var(--line);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease;
+}
+.hero-stat.is-button:hover:not(:disabled) { background: var(--bg-soft); filter: none; transform: none; box-shadow: 0 3px 0 var(--line); }
+.hero-stat.is-button:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 var(--line); }
 .hero-stat-icon {
   display: grid;
   place-items: center;
@@ -810,10 +879,14 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   /* Sense fons: el color el porta la icona. */
   color: var(--accent);
 }
+/* Mateixa regla que a `.link-icon`: la mida del dibuix segueix la de la caixa. */
+.hero-stat-icon .guineu { height: 1.3rem; }
+/* El valor és semibold: en neguit les tres xapes cridaven massa i llegien
+   com un títol de pàgina dins d'un element que no ho és. */
 .hero-stat b {
   max-width: 100%;
   font-size: 1.1rem;
-  font-weight: 900;
+  font-weight: 600;
   line-height: 1.15;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -825,29 +898,22 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   line-height: 1.2;
   color: var(--muted);
 }
-/* Les tres xapes són botons, i els botons tenen vora a sota: aquí la
-   aporta el bloc comú del menú. L'hover només lleva el filtre del botó
-   base, que en una peça blanca no serveix de res. */
-.hero-stat:hover:not(:disabled) { background: var(--bg-soft); filter: none; transform: none; box-shadow: 0 3px 0 var(--line); }
 .v-gold   { --accent: var(--gold-ink); }
 
 /* ── Descobreix i comunitat ──
-   Encapçalament de secció: text petit, de color, amb una petita icona
-   al davant —el mateix criteri amb què Duolingo etiqueta «PALABRA
-   NUEVA»—. No és un títol de pàgina: és un cartell de secció. */
+   Encapçalament de secció: text petit en el color principal de marca, el
+   taronja de la guineu. Sense icona: el text ja diu de què va la secció.
+   `orange-ink` i no `orange`: el viu no arriba a 4.5:1 sobre el fons del
+   menú i aquí el text és petit. */
 .menu-h {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
   margin: 0.35rem 0 0;
-  color: var(--blue-deep);
+  color: var(--orange-ink);
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   text-align: left;
 }
-.menu-h svg { flex: 0 0 auto; }
 /* Quatre entrades en dues columnes: quadrades i amb aire. Amb sis
    quedava una fila buida, i tres files de tres eren massa petites. */
 .link-grid {
@@ -860,9 +926,6 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   padding: 0;
   list-style: none;
 }
-/* Els rècords ocupen tota l'amplada: són el resum de tot el que has jugat
-   i, d'una fila de dues, quedaria esbarrat. */
-.link-tile.is-wide { grid-column: 1 / -1; }
 /* Les quatre entrades: icona de color a l'esquerra i dues línies de
    text a la dreta. La icona és l'únic lloc on hi ha color a la targeta;
    el títol va en negre i la frase en gris, com a Duolingo. */
@@ -875,8 +938,15 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   min-height: 4.25rem;
   text-align: left;
   color: var(--text);
+  /* La vora de baix va en taronja com l'hover: el blau es llegia com si
+     el to de la targeta (que només viu a la icona) governés el botó. */
+  --btn-shadow: var(--orange-shadow);
 }
-.link-tile:hover:not(:disabled) { border-color: var(--accent, var(--blue)); background: color-mix(in srgb, #fff 90%, var(--accent, var(--blue)) 10%); }
+/* L'hover és el mateix a les quatre entrades i del color principal de
+   marca: el to de cadascuna només viu a la icona. Un hover de colors
+   diferents feia llegir les targetes com quatre botons que no són
+   germans. */
+.link-tile:hover:not(:disabled) { border-color: var(--orange-deep); background: var(--orange-wash); }
 .link-icon {
   display: grid;
   place-items: center;
@@ -885,6 +955,10 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   height: 2rem;
   color: var(--accent, var(--blue));
 }
+/* Els dibuixos de la guineu es regeixen per l'alçada des de la mateixa caixa
+   que les icones de traç: així, quan a mòbil la caixa es fa petita, el
+   dibuix hi va amb ella en comptes de quedar-hi penjant. */
+.link-icon .guineu { height: 1.75rem; }
 .link-tile-body { display: flex; flex-direction: column; gap: 0.05rem; min-width: 0; }
 .link-tile-label {
   font-size: 0.95rem;
@@ -988,10 +1062,9 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   animation: riseIn 0.3s ease;
   z-index: 2;
 }
-/* El text i les xifres han de pujar per damunt del paisatge. */
+/* El text ha de pujar per damunt del paisatge. */
 .result .score-card h1,
-.result .score-card p,
-.result .score-card ul {
+.result .score-card p {
   position: relative;
   z-index: 1;
 }
@@ -1017,52 +1090,111 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
 }
 .stars { font-size: 1.6rem; letter-spacing: 0.15rem; }
 .result .stars { font-size: 1.9rem; margin: 0.1rem 0 0.9rem; }
-/* Les xifres, com les xapas d'XP de Duolingo. En flex perquè la fila s'adapti
-   sola al nombre de dades: dues a la majoria de modes, tres al contrarellotge. */
-.result-stats {
+.result-note { margin: 0.75rem 0 0; }
+.result .best { justify-content: center; margin: 0.85rem 0 0; }
+.emojis { font-size: 4.5rem; margin: 1.25rem 0; letter-spacing: 0.15rem; line-height: 1.2; }
+
+/* ── Resultat: un quadrat per poble ─────────────────────────
+   El resum de la partida en una sola línia de dalt a baix: primer què ha
+   passat a cada poble (el color) i després què val la partida (el text). */
+.result-strip {
+  background: var(--bg-soft);
+  border-radius: var(--r-lg);
+  padding: 0.9rem 0.85rem 0.75rem;
+  margin-top: 0.75rem;
+}
+.score-tiles {
   display: flex;
-  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
   margin: 0;
   padding: 0;
   list-style: none;
 }
-.result-stats li {
-  flex: 1 1 0;
-  min-width: 0;
-  padding: 0.65rem 0.25rem;
-  border-radius: var(--r-md);
-  background: var(--bg-soft);
-  border-bottom: 3px solid var(--line);
-  text-align: center;
-  animation: statSlide 0.3s ease both;
-}
-.result-stats li:nth-child(1) { animation-delay: 0.05s; }
-.result-stats li:nth-child(2) { animation-delay: 0.12s; }
-.result-stats li:nth-child(3) { animation-delay: 0.19s; }
-@keyframes statSlide {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.result-stats b {
-  display: block;
-  font-size: 1.3rem;
+.score-tile {
+  --tile: 2rem;
+  display: grid;
+  place-items: center;
+  width: var(--tile);
+  height: var(--tile);
+  border-radius: var(--r-sm);
+  border: 2px solid transparent;
   font-weight: 900;
-  line-height: 1.15;
+  font-size: 0.95rem;
   font-variant-numeric: tabular-nums;
+  animation: tilePop 0.28s ease both;
 }
-.result-stats span {
-  display: block;
-  margin-top: 0.1rem;
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+/* Els colors són els de la marca: verd és encert net, daurat és encert amb
+   ajuda, coral és no encertat. El número va en blanc o en text fosc segons el
+   fons, i en tots dos casos passa del 4.5:1 que demana el contrast. */
+.t-ok   { background: var(--green-deep); color: #fff; }
+.t-hint { background: var(--gold);       color: var(--gold-ink); }
+.t-nope { background: var(--coral-deep); color: #fff; }
+.score-tiles li:nth-child(1)  { animation-delay: 0.04s; }
+.score-tiles li:nth-child(2)  { animation-delay: 0.08s; }
+.score-tiles li:nth-child(3)  { animation-delay: 0.12s; }
+.score-tiles li:nth-child(4)  { animation-delay: 0.16s; }
+.score-tiles li:nth-child(5)  { animation-delay: 0.2s; }
+.score-tiles li:nth-child(n + 6) { animation-delay: 0.24s; }
+@keyframes tilePop {
+  from { opacity: 0; transform: translateY(6px) scale(0.9); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+/* Al contrarellotge hi ha molts més pobles que en una partida de 5 o 10: amb
+   la mateixa mida no hi caben en una fila i es parteixen en tres. */
+.score-tiles.is-many .score-tile { --tile: 1.55rem; font-size: 0.8rem; }
+/* Al menú del dia no hi ha cap número: és una mirada ràpida al resultat, i el
+   que interessa és el color de cada poble. */
+.score-tiles.is-sm .score-tile { --tile: 1.2rem; border-radius: 5px; }
+/* A la targeta del dia tot el contingut va a l'esquerra, els quadrats també. */
+.daily-card .score-tiles { justify-content: flex-start; }
+.result-summary {
+  margin: 0.6rem 0 0;
+  font-size: 0.9rem;
+  font-weight: 700;
   color: var(--muted);
 }
-.result-note { margin: 0.75rem 0 0; }
-.result .best { justify-content: center; margin: 0.85rem 0 0; }
-.emojis { font-size: 4.5rem; margin: 1.25rem 0; letter-spacing: 0.15rem; line-height: 1.2; }
-.emojis.small { font-size: 2rem; margin: 0.5rem 0; }
+
+/* ── Resultat: la ratxa del repte diari ─────────────────────
+   Només té sentit al repte diari (a la resta de modes no hi ha ratxa), i per
+   això és una targeta blanca i no una píndola de dades: obre els rècords. */
+.streak-card {
+  --btn: var(--surface);
+  --btn-shadow: var(--line);
+  --btn-text: var(--text);
+  --focus-ring: var(--focus);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: 0.6rem;
+  padding: 0.65rem 0.85rem;
+  text-align: left;
+  border: 1.5px solid var(--line);
+  box-shadow: 0 3px 0 var(--line);
+}
+.streak-card:hover:not(:disabled) { background: var(--bg-soft); filter: none; }
+.streak-badge {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: var(--r-pill);
+  background: var(--gold-wash);
+  color: var(--orange-deep);
+}
+.streak-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+.streak-copy strong { font-size: 1.02rem; font-weight: 800; }
+.streak-copy span { font-size: 0.83rem; font-weight: 700; color: var(--muted); }
+.streak-chevron { flex: 0 0 auto; color: var(--muted); }
 
 /* ============================================================
    Partida
@@ -1096,8 +1228,9 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   gap: 0.5rem;
   margin-bottom: 0.5rem;
 }
-.hearts { font-size: 1.15rem; letter-spacing: 0.1rem; white-space: nowrap; }
-.heart-lost { opacity: 0.3; filter: grayscale(1); }
+/* Vides: el cor gris és la vida que ja no hi ha, no un cor esborrat. Així es
+   llegeix d'un cop quantes queden i quantes s'han perdut. */
+.hearts { display: inline-flex; gap: 0.3rem; white-space: nowrap; }
 
 .puzzle-emoji {
   font-size: clamp(3.2rem, 17vw, 5rem);
@@ -1272,6 +1405,9 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
 .map-info-text span { color: var(--muted); font-size: 0.9rem; }
 .map-info-text em { color: var(--gold-ink); font-size: 0.85rem; font-style: normal; font-weight: 700; }
 .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   padding: 0.3rem 0.7rem;
   border-radius: var(--r-pill);
   background: #eceadf;
@@ -1363,7 +1499,7 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
 .town-off .town-body strong { color: var(--muted); }
 .town-body span { color: var(--muted); font-size: 0.88rem; }
 .town-body em { color: var(--gold-ink); font-size: 0.82rem; font-style: normal; font-weight: 700; }
-.town-status { font-size: 1.2rem; flex: 0 0 auto; }
+.town-status { display: grid; place-items: center; width: 1.7rem; height: 1.7rem; flex: 0 0 auto; }
 
 .coll-credit { margin-top: 1.5rem; text-align: center; }
 
@@ -1764,6 +1900,7 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   .hero h1 { font-size: 1.55rem; }
   .hero-stat b { font-size: 0.85rem; }
   .hero-stat span { font-size: 0.58rem; }
+  .hero-stat-icon .guineu { height: 1.05rem; }
 }
 
 /* ============================================================
@@ -1794,8 +1931,10 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   .link-tile-label { font-size: 0.92rem; }
   .link-tile-sub { font-size: 0.72rem; }
   .modes-banner { padding: 0.8rem 1rem 0.85rem; gap: 0.5rem; }
+  .daily-card, .modes-banner { min-height: 9.5rem; }
   .modes-preview { min-height: 3.2rem; }
   .modes-icon { width: 2.4rem; height: 2.4rem; }
+  .daily-icon { width: 2.4rem; height: 2.4rem; }
   .modes-preview img, .modes-more { width: 2.6rem; height: 2.6rem; }
   /* Sense espai per a un encapçalament de secció: les icones
      parlen per si mateixos. */
@@ -1808,6 +1947,7 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   .hero h1 { font-size: 1.3rem; }
   .hero p { font-size: 0.75rem; }
   .hero-stat-icon { width: 1.25rem; height: 1.25rem; }
+  .hero-stat-icon .guineu { height: 1.05rem; }
   .hero-stat b { font-size: 0.9rem; }
   .link-tile { min-height: 3.5rem; padding: 0.55rem 0.65rem; }
   .link-icon { width: 1.9rem; height: 1.9rem; }
@@ -1830,7 +1970,7 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
 @media (prefers-contrast: more) {
   :root { --line: #9a8f7c; --muted: #3d4550; }
   button { border: 2px solid rgba(0, 0, 0, 0.35); }
-  .tile { border-width: 3px; }
+  .tile, .score-tile { border-width: 3px; }
 }
 
 @media print {

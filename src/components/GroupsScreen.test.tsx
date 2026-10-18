@@ -157,7 +157,7 @@ describe('GroupsScreen component', () => {
     await waitFor(() => {
       expect(writeTextSpy).toHaveBeenCalledWith('OSO123')
     })
-    expect(screen.getByRole('button', { name: 'Copiat ✅' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Copiat' })).toBeInTheDocument()
 
     // Tornar enrere a la llista de grups
     const backBtn = screen.getByRole('button', { name: '← Els meus grups' })
@@ -244,7 +244,7 @@ describe('GroupsScreen component', () => {
     const copyBtn = await screen.findByRole('button', { name: 'Copiar' })
     fireEvent.click(copyBtn)
 
-    // No s'ha posat en estat "Copiat ✅"
-    expect(screen.queryByRole('button', { name: 'Copiat ✅' })).not.toBeInTheDocument()
+    // No s'ha posat en estat «Copiat»
+    expect(screen.queryByRole('button', { name: 'Copiat' })).not.toBeInTheDocument()
   })
 })

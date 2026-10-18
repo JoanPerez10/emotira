@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import type { Proposal, Tally } from "../api/types";
 import { votedStorageKey } from "../api/voter";
+import GuineuIcon from "./GuineuIcon";
 
 const VOTED_KEY = votedStorageKey(api.mode);
 
@@ -67,7 +68,7 @@ export default function VoteScreen({
     <main className="app">
       <div className="topbar">
         <button className="back" onClick={onExit}>← Menú</button>
-        <strong>🗳️ Vota propostes</strong>
+        <strong className="topbar-title"><GuineuIcon name="vote" size={22} /> Vota propostes</strong>
       </div>
       <p>Ajuda a decidir quins trencaclosques entren al joc.</p>
 
@@ -76,7 +77,9 @@ export default function VoteScreen({
           la seva quan li sembli que en cal. */}
       {onPropose && (
         <div className="actions">
-          <button className="secondary" onClick={onPropose}>✏️ Proposa un poble</button>
+          <button className="secondary" onClick={onPropose}>
+            <GuineuIcon name="idea" size={20} /> Proposa un poble
+          </button>
         </div>
       )}
 

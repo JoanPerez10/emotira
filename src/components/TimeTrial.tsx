@@ -5,6 +5,7 @@ import { acceptedAnswers, isCorrectAnswer, normalize } from "../utils/normalize"
 import { shuffle } from "../utils/random";
 import { createTrial, trialReducer, TRIAL_ATTEMPTS, TRIAL_BONUS_STEPS, TRIAL_MAX_SECONDS, TRIAL_SECONDS } from "../utils/timeTrial";
 import Icon from "./Icon";
+import GuineuIcon from "./GuineuIcon";
 import { parseWords } from "../utils/words";
 import LetterInput, { type LetterInputHandle } from "./LetterInput";
 
@@ -112,7 +113,7 @@ export default function TimeTrial({ deck, pool, onSolve, onFinish, onExit }: Pro
       </section>
       </div>
       <p className="trial-warning" role="status">{state.remaining <= 15 ? "Últims 15 segons!" : "\u00a0"}</p>
-      <div className="game-status"><span className="hearts" aria-label={`Intents restants: ${TRIAL_ATTEMPTS - state.fails}`}>{Array.from({ length: TRIAL_ATTEMPTS }, (_, i) => <span key={i} className={i < state.fails ? "heart-lost" : undefined} aria-hidden="true">❤️</span>)}</span></div>
+      <div className="game-status"><span className="hearts" role="img" aria-label={`Intents restants: ${TRIAL_ATTEMPTS - state.fails}`}>{Array.from({ length: TRIAL_ATTEMPTS }, (_, i) => <GuineuIcon key={i} name={i < state.fails ? "lifeDown" : "lifeUp"} size={22} />)}</span></div>
       <p className="puzzle-emoji">{puzzle.emojis}</p>
       {playing && state.fails >= 1 && puzzle.comarca && <p className="hint"><Icon name="lightbulb" size={18} /><span>Comarca: {puzzle.comarca}</span></p>}
       {playing && state.fails >= 2 && <p className="hint"><Icon name="lightbulb" size={18} /><span>Comença per «{puzzle.answer[0].toUpperCase()}»</span></p>}

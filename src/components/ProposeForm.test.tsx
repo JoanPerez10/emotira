@@ -14,7 +14,7 @@ describe('ProposeForm component', () => {
     const handleExit = vi.fn()
     render(<ProposeForm onExit={handleExit} />)
 
-    expect(screen.getByText(/💡 Proposa un poble/i)).toBeInTheDocument()
+    expect(screen.getByText(/Proposa un poble/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Poble o ciutat/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Com es forma\?/i)).toBeInTheDocument()
 

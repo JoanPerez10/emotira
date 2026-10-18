@@ -5,6 +5,7 @@ import { isCorrectAnswer } from "../utils/normalize";
 import { countGraphemes, splitGraphemes } from "../utils/graphemes";
 import { api, isMock } from "../api";
 import EmojiPicker from "./EmojiPicker";
+import GuineuIcon from "./GuineuIcon";
 
 const SENT_KEY = "emotira:proposals-sent";
 const MAX_PER_DAY = 5;
@@ -131,7 +132,7 @@ export default function ProposeForm({ onExit }: { onExit: () => void }) {
     <main className="app">
       <div className="topbar">
         <button className="back" onClick={onExit}>← Menú</button>
-        <strong>💡 Proposa un poble</strong>
+        <strong className="topbar-title"><GuineuIcon name="idea" size={22} /> Proposa un poble</strong>
       </div>
 
       {!api.enabled && (

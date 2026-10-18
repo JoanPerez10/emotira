@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { api } from './api'
-import { todayKey } from './utils/daily'
-import { MENU_MODES } from './modes'
 import type { Session } from './api/types'
+import { MENU_MODES } from './modes'
+import { dailyPuzzles, todayKey } from './utils/daily'
 
 describe('App component', () => {
   beforeEach(() => {
@@ -25,6 +25,14 @@ describe('App component', () => {
   const backToMenu = () =>
     fireEvent.click(screen.getByRole('button', { name: '← Menú' }))
 
+  /** Sessió d'exemple per a les proves que necessiten compte. */
+  const session = (username = 'joan_test'): Session => ({
+    id: 'user-123',
+    username,
+    email: 'joan@dev.local',
+    isAdmin: false,
+  })
+
   it('renderitza el menú principal amb la capçalera, el repte diari i el banner', () => {
     render(<App />)
 
@@ -35,12 +43,21 @@ describe('App component', () => {
     expect(screen.getByRole('button', { name: /Tots els modes/i })).toBeInTheDocument()
   })
 
-  it('mostra les tres xifres del capçalera i el compte com a botó', () => {
+  it('mostra les tres xifres del capçalera i només el compte és botó', () => {
     render(<App />)
 
     expect(screen.getByText('dies')).toBeInTheDocument()
     expect(screen.getByText('pobles')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Convidat/ })).toBeInTheDocument()
+
+    // La ratxa i els pobles són indicadors: mostren dades i no tenen cap
+    // acció, així que no són botons ni porten la peça de botó.
+    for (const label of ['dies', 'pobles']) {
+      const chip = screen.getByText(label).closest('.hero-stat')
+      expect(chip?.tagName).toBe('DIV')
+      expect(chip?.classList.contains('is-button')).toBe(false)
+    }
+    expect(screen.getByText('Convidat').closest('.hero-stat.is-button')).toBeInTheDocument()
   })
 
   it('no obre cap mode des del menú principal: els noms són només etiquetes', () => {
@@ -71,7 +88,7 @@ describe('App component', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Descobreix i comunitat' })).toBeInTheDocument()
-    for (const label of ['Col·lecció', 'Rànquing', 'Grups', 'Propostes', 'Els teus rècords']) {
+    for (const label of ['Col·lecció', 'Rànquing', 'Grups', 'Propostes']) {
       // El nom accessible de la fila és «etiqueta + descripció»: es filtra
       // pel text visible perquè «Grups» xocaria amb «Grups dels Països…».
       expect(screen.getByText(label).closest('button')).toBeInTheDocument()
@@ -81,11 +98,19 @@ describe('App component', () => {
     expect(screen.queryByText('Proposta')).not.toBeInTheDocument()
   })
 
-  it('els rècords són al menú i s´hi arriba sense compte', () => {
+  it('els rècords són al perfil i només s´hi arriben amb compte', async () => {
+    vi.spyOn(api.auth, 'getSession').mockResolvedValue(session())
+    vi.spyOn(api.records, 'load').mockResolvedValue(null)
+
     render(<App />)
 
-    // Sense compte: són dades del dispositiu, no del perfil.
-    fireEvent.click(screen.getByText('Els teus rècords').closest('button')!)
+    // Sense compte no hi ha entrada als rècords: són dades del perfil.
+    expect(screen.queryByText('Els teus rècords')).not.toBeInTheDocument()
+
+    const accountBtn = await screen.findByRole('button', { name: /joan_test/ })
+    fireEvent.click(accountBtn)
+
+    fireEvent.click(screen.getByRole('button', { name: /Els teus rècords/i }))
 
     expect(screen.getByText('Rècords')).toBeInTheDocument()
     for (const mode of ['Repte diari', 'Endivina 10', 'Contrarellotge', 'Invers', 'Música']) {
@@ -93,18 +118,30 @@ describe('App component', () => {
     }
   })
 
-  it('permet esborrar els rècords des de la seva pantalla si l\'usuari confirma', () => {
+  it('permet esborrar els rècords del dispositiu des del compte de convidat', () => {
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    localStorage.setItem('emotira:records:v1', JSON.stringify({
+      daily: { played: 0, streak: 0, bestStreak: 0, lastDate: null, history: {} },
+      unlockedTowns: ['Vic'],
+      ten: { played: 0, best: 0 },
+      hard: { played: 0, best: 0 },
+      infinite: { played: 0, bestStreak: 0, bestSolved: 0 },
+      timeTrial: { played: 0, best: 0 },
+      inverse: { played: 0, best: 0 },
+      music: { played: 0, best: 0 },
+    }))
 
     render(<App />)
 
-    fireEvent.click(screen.getByText('Els teus rècords').closest('button')!)
-    const resetBtn = screen.getByRole('button', { name: 'Esborrar tots els rècords' })
-    fireEvent.click(resetBtn)
+    // Sense compte: els rècords només es toquen des de la pantalla del compte.
+    fireEvent.click(screen.getByRole('button', { name: /Convidat/ }))
+    expect(screen.getByText(/1 poble descobert/)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Esborrar tots els rècords' }))
 
     expect(confirmSpy).toHaveBeenCalled()
-    // Esborra les dades i torna a pintar-les a zero.
-    expect(screen.getByText('Reptes jugats:')).toBeInTheDocument()
+    // Esborra les dades i deixa el dispositiu a zero.
+    expect(screen.queryByText(/poble descobert/)).not.toBeInTheDocument()
   })
 
   it('navega a la pantalla del compte des de la targeta del capçalera', () => {
@@ -113,7 +150,7 @@ describe('App component', () => {
     const userTile = screen.getByRole('button', { name: /Convidat/ })
     fireEvent.click(userTile)
 
-    expect(screen.getByText('👤 Compte')).toBeInTheDocument()
+    expect(screen.getByText('Compte')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Entrar' })).toBeInTheDocument()
   })
 
@@ -159,7 +196,7 @@ describe('App component', () => {
 
     // Una sola entrada per al bucle complet de la comunitat.
     fireEvent.click(screen.getByText('Propostes').closest('button')!)
-    expect(screen.getByText('🗳️ Vota propostes')).toBeInTheDocument()
+    expect(screen.getByText('Vota propostes')).toBeInTheDocument()
 
     // I des de aquí mateix es proposa un poble, sense tornar al menú.
     fireEvent.click(screen.getByRole('button', { name: /Proposa un poble/i }))
@@ -168,7 +205,7 @@ describe('App component', () => {
     // El formulari torna al menú pel seu propi botó «← Menú».
     backToMenu()
     fireEvent.click(screen.getByText('Propostes').closest('button')!)
-    expect(screen.getByText('🗳️ Vota propostes')).toBeInTheDocument()
+    expect(screen.getByText('Vota propostes')).toBeInTheDocument()
   })
 
   it('obre el panell d\'administració amb el hash #admin i permet sortir amb el botó Menú', async () => {
@@ -220,7 +257,12 @@ describe('App component', () => {
 
     expect(screen.getByText('Avui ja has jugat')).toBeInTheDocument()
     expect(screen.getByText('3/3')).toBeInTheDocument()
-    expect(screen.getByText('🟩🟩🟩')).toBeInTheDocument()
+
+    // El resultat del dia es llegeix amb quadrats, no amb els 🟩🟨🟥 que
+    // només es desen per compartir.
+    const tiles = screen.getByRole('list', { name: /Resultat de cada poble d'avui/i })
+    expect(tiles.children).toHaveLength(3)
+    for (const tile of tiles.children) expect(tile).toHaveClass('t-ok')
 
     const shareBtn = screen.getByRole('button', { name: /Compartir resultat/i })
     fireEvent.click(shareBtn)
@@ -232,13 +274,7 @@ describe('App component', () => {
   })
 
   it('carrega la sessió de l\'usuari si està connectat', async () => {
-    const mockSession: Session = {
-      id: 'user-123',
-      username: 'joan_test',
-      email: 'joan@dev.local',
-      isAdmin: false,
-    }
-    vi.spyOn(api.auth, 'getSession').mockResolvedValue(mockSession)
+    vi.spyOn(api.auth, 'getSession').mockResolvedValue(session())
     vi.spyOn(api.records, 'load').mockResolvedValue(null)
     vi.spyOn(api.records, 'save').mockResolvedValue(undefined)
 
@@ -290,12 +326,6 @@ describe('App component', () => {
   })
 
   it('sincronitza rècords del núvol quan l\'usuari té dades guardades', async () => {
-    const mockSession: Session = {
-      id: 'user-123',
-      username: 'joan_test',
-      email: 'joan@dev.local',
-      isAdmin: false,
-    }
     const cloudRecords = {
       daily: { played: 5, streak: 3, bestStreak: 4, lastDate: null, history: {} },
       ten: { played: 2, best: 25 },
@@ -306,7 +336,7 @@ describe('App component', () => {
       infinite: { played: 1, bestSolved: 5, bestStreak: 5 },
       unlockedTowns: ['Vic'],
     }
-    vi.spyOn(api.auth, 'getSession').mockResolvedValue(mockSession)
+    vi.spyOn(api.auth, 'getSession').mockResolvedValue(session())
     vi.spyOn(api.records, 'load').mockResolvedValue(cloudRecords)
     const submitScoreSpy = vi.spyOn(api.scores, 'submit').mockResolvedValue(undefined)
 
@@ -335,28 +365,111 @@ describe('App component', () => {
     expect(screen.getByText('Temps esgotat!')).toBeInTheDocument()
 
     // Clic a Menú (línia 347)
-    const menuBtn = screen.getByRole('button', { name: 'Menú' })
+    const menuBtn = screen.getByRole('button', { name: 'Tornar al menú' })
     fireEvent.click(menuBtn)
     expect(screen.getByRole('heading', { level: 1, name: 'Emotira' })).toBeInTheDocument()
 
     vi.useRealTimers()
   })
 
-  it('navega a la pantalla de compte en prémer el botó d\'entrar des de rànquing i grups', async () => {
+  it('després del repte diari mostra un quadrat per poble, el resum i la ratxa', () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: /Repte diari/i }))
+
+    // Es resolen els cinc pobles del dia.
+    for (const puzzle of dailyPuzzles()) {
+      fireEvent.change(screen.getByLabelText(/Escriu el nom del poble/i), {
+        target: { value: puzzle.answer },
+      })
+      fireEvent.click(screen.getByRole('button', { name: 'Comprovar' }))
+      fireEvent.click(screen.getByRole('button', { name: /Poble següent|Veure el resultat/ }))
+    }
+
+    expect(screen.getByText('Enhorabona!')).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: /Resultat de cada poble/ }).children).toHaveLength(5)
+    expect(screen.getByText('5/5 pobles · 15/15 punts')).toBeInTheDocument()
+
+    // La ratxa només té sentit al repte diari, i el text ha de dir alguna cosa.
+    expect(screen.getByText("Ratxa d'1 dia")).toBeInTheDocument()
+    expect(screen.getByText('Demà pots fer créixer la ratxa!')).toBeInTheDocument()
+
+    expect(screen.getByRole('button', { name: /Compartir resultat/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Tornar al menú' })).toBeInTheDocument()
+  })
+
+  it('la targeta de la ratxa obre els rècords', () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: /Repte diari/i }))
+
+    for (const puzzle of dailyPuzzles()) {
+      fireEvent.change(screen.getByLabelText(/Escriu el nom del poble/i), {
+        target: { value: puzzle.answer },
+      })
+      fireEvent.click(screen.getByRole('button', { name: 'Comprovar' }))
+      fireEvent.click(screen.getByRole('button', { name: /Poble següent|Veure el resultat/ }))
+    }
+
+    fireEvent.click(screen.getByRole('button', { name: /Ratxa d'1 dia/ }))
+
+    expect(screen.getByText('Rècords')).toBeInTheDocument()
+  })
+
+  it('als modes sense ratxa no en parla i ofereix tornar a jugar', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    render(<App />)
+    openModes()
+
+    fireEvent.click(screen.getByRole('button', { name: /Contrarellotge/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Jugar/i }))
+
+    act(() => {
+      vi.advanceTimersByTime(121000)
+    })
+
+    expect(await screen.findByText(/Podem fer-ho millor|Enhorabona!/)).toBeInTheDocument()
+    // Al contrarellotge no hi ha ratxa: ni targeta ni text sobre la ratxa.
+    expect(screen.queryByText(/[Rr]atxa/)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Tornar a jugar' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Tornar al menú' })).toBeInTheDocument()
+
+    vi.useRealTimers()
+  })
+
+  it('el menú mostra els dibuixos de la guineu a rànquing, grups, propostes i compte', () => {
+    render(<App />)
+
+    // Les entrades de comunitat porten dibuix, no icona de traç: es busquen
+    // pel fitxer que carreguen perquè el text sol no distingeix un de l'altre.
+    for (const [label, src] of [
+      ['Rànquing', '/assets/ranquing-guineu.png'],
+      ['Grups', '/assets/grup-guineu.png'],
+      ['Propostes', '/assets/vot-guineu.png'],
+    ] as const) {
+      const tile = screen.getByText(label).closest('button')!
+      expect(tile.querySelector('img')).toHaveAttribute('src', src)
+      expect(tile.querySelector('svg')).toBeNull()
+    }
+
+    // El compte i el convidat són el mateix dibuix: canvia el text, no la imatge.
+    const account = screen.getByRole('button', { name: /Convidat/ })
+    expect(account.querySelector('img')).toHaveAttribute('src', '/assets/perfil-guineu.png')
+  })
+
+  it('obre la pantalla de compte en prémer el botó d\'entrar des de rànquing i grups', async () => {
     render(<App />)
 
     // Des de Rànquing
     fireEvent.click(screen.getByText('Rànquing').closest('button')!)
     const loginRankingBtn = await screen.findByRole('button', { name: /Entrar \/ Crear compte/i })
     fireEvent.click(loginRankingBtn)
-    expect(screen.getByText('👤 Compte')).toBeInTheDocument()
+    expect(screen.getByText('Compte')).toBeInTheDocument()
 
     // Tornar al menú i després a Grups
     backToMenu()
     fireEvent.click(screen.getByText('Grups').closest('button')!)
     const loginGroupsBtn = await screen.findByRole('button', { name: /Entrar \/ Crear compte/i })
     fireEvent.click(loginGroupsBtn)
-    expect(screen.getByText('👤 Compte')).toBeInTheDocument()
+    expect(screen.getByText('Compte')).toBeInTheDocument()
   })
 
   it('inicia el repte diari des de la targeta principal', () => {
@@ -369,13 +482,7 @@ describe('App component', () => {
   })
 
   it('navega al compte des de la targeta del capçalera quan hi ha sessió i des d\'allà a rànquing i grups', async () => {
-    const mockSession: Session = {
-      id: 'user-123',
-      username: 'joan_connectat',
-      email: 'joan@dev.local',
-      isAdmin: false,
-    }
-    vi.spyOn(api.auth, 'getSession').mockResolvedValue(mockSession)
+    vi.spyOn(api.auth, 'getSession').mockResolvedValue(session('joan_connectat'))
     vi.spyOn(api.records, 'load').mockResolvedValue(null)
 
     render(<App />)
@@ -384,18 +491,18 @@ describe('App component', () => {
     const accountBtn = await screen.findByRole('button', { name: /joan_connectat/ })
     fireEvent.click(accountBtn)
 
-    expect(screen.getByText('👤 Compte')).toBeInTheDocument()
+    expect(screen.getByText('Compte')).toBeInTheDocument()
 
     // Navegar a rànquing des de la pantalla de compte
     const rankingBtn = screen.getByRole('button', { name: /Veure el rànquing/i })
     fireEvent.click(rankingBtn)
-    expect(screen.getByText('🏅 Rànquing')).toBeInTheDocument()
+    expect(screen.getByText('Rànquing')).toBeInTheDocument()
 
     // Tornar al compte i després a grups
     backToMenu()
     fireEvent.click(screen.getByRole('button', { name: /joan_connectat/ }))
     const groupsBtn = screen.getByRole('button', { name: /Els meus grups/i })
     fireEvent.click(groupsBtn)
-    expect(screen.getByText('👥 Grups')).toBeInTheDocument()
+    expect(screen.getByText('Grups')).toBeInTheDocument()
   })
 })

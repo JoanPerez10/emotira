@@ -34,11 +34,27 @@ describe('AccountScreen component', () => {
         />
       )
 
-      expect(screen.getByText('👤 Compte')).toBeInTheDocument()
+      expect(screen.getByText('Compte')).toBeInTheDocument()
       expect(screen.getByText(/Progrés en aquest dispositiu:/i)).toBeInTheDocument()
       expect(screen.getByText(/2 pobles descoberts/i)).toBeInTheDocument()
       expect(screen.getByRole('button', { name: 'Entrar' })).toBeInTheDocument()
       expect(screen.getByRole('tab', { name: 'Crear compte' })).toBeInTheDocument()
+    })
+
+    it('permet esborrar els rècords del dispositiu si el convidat confirma', () => {
+      const onResetRecords = vi.fn()
+      render(
+        <AccountScreen
+          session={null}
+          records={mockRecords}
+          onExit={vi.fn()}
+          onResetRecords={onResetRecords}
+        />
+      )
+
+      fireEvent.click(screen.getByRole('button', { name: 'Esborrar tots els rècords' }))
+
+      expect(onResetRecords).toHaveBeenCalled()
     })
 
     it('permet iniciar sessió satisfactòriament', async () => {
@@ -174,9 +190,9 @@ describe('AccountScreen component', () => {
         />
       )
 
-      expect(screen.getByText(/👤 joan_emotira/i)).toBeInTheDocument()
+      expect(screen.getByText(/joan_emotira/i)).toBeInTheDocument()
       expect(screen.getByText('joan@example.cat')).toBeInTheDocument()
-      expect(screen.getByText('🏆 Rècords del jugador')).toBeInTheDocument()
+      expect(screen.getByText('Rècords del jugador')).toBeInTheDocument()
 
       // Botons de navegació
       const rankBtn = screen.getByRole('button', { name: /Veure el rànquing/i })
