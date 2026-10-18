@@ -135,7 +135,17 @@ body {
   font-family: "Twemoji Country Flags", "Nunito Variable", "Nunito", ui-rounded, "Segoe UI Variable", system-ui,
     "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Symbol",
     -apple-system, "Segoe UI", Roboto, sans-serif;
-  background: var(--bg);
+  /* El fons no és un color pla: hi ha dues llums molt suaus —taronja a
+     dalt a l'esquerra, blava a dalt a la dreta— que donen profunditat i
+     recorden els dos colors de la guineu. Són tan fines que el text no
+     hi perd contrast. */
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(42rem 30rem at 8% -8%, rgba(249, 107, 37, 0.1), transparent 62%),
+    radial-gradient(38rem 28rem at 96% 2%, rgba(39, 108, 220, 0.09), transparent 60%),
+    radial-gradient(30rem 24rem at 50% 108%, rgba(247, 198, 120, 0.12), transparent 65%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   -webkit-text-size-adjust: 100%;
@@ -355,7 +365,7 @@ button:disabled {
 
 /* Botó pla: menys pes visual, per a accionsomials */
 /* Botons de fons clar: l'anell de focus ha de ser fosc per veure's. */
-.ghost, .back, .share-btn, .mode-card, .hero-stat.is-button, .letters-native {
+.ghost, .back, .share-btn, .link-tile, .hero-stat.is-button, .letters-native {
   --focus-ring: var(--focus);
 }
 /* Botó discret:Blanc, sense omra de color, però amb vora de baix com
@@ -691,6 +701,41 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   gap: 0.7rem;
 }
 
+/* Les entrades de mode són la mateixa peça que les de comunitat —blanca,
+   contorn de 2 px, vora de 3 px, hover de contorn i fons— però amb mescos i
+   en graella de dues columnes, amb la guineu a dalt com abans. L'icona no
+   pot anar al costat del text: «Contrarellotge» és una sola paraula i en
+   dues columnes no hi cab al costat de la guineu (es desbordava de la
+   caixa). */
+.grid--modes {
+  gap: 0.8rem;
+}
+.grid--modes .link-tile {
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 1.15rem 1.05rem;
+  min-height: 9.75rem;
+  gap: 0.6rem;
+}
+.grid--modes .link-icon {
+  width: 3.25rem;
+  height: 3.25rem;
+  margin-bottom: 0.25rem;
+}
+.grid--modes .link-icon img,
+.grid--modes .link-icon .guineu {
+  height: 2.85rem;
+}
+.grid--modes .link-tile-body { gap: 0.1rem; }
+.grid--modes .link-tile-label {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.grid--modes .link-tile-sub {
+  font-size: 0.85rem;
+}
+
 /* ============================================================
    La peça de les grans targetes del menú
    El menú té dos tipus de peça, i la diferència és intencionada:
@@ -728,11 +773,11 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   box-shadow: 0 0 0 var(--card-lip);
 }
 
-/* Targetes blaques que sí que es prémen: contorn de 2 px —la mateixa
-   grossor que els inputs, que són l'altre lloc on hi ha text— i vora de
-   baix del to del fons, que és el que fa que tots els botons es
-   llegeixin igual. */
-.mode-card,
+/* Entrades de menú: targetes blaques que sí que es prémen —contorn de 2 px,
+   la mateixa grossor que els inputs, que són l'altre lloc on hi ha text— i
+   vora de baix del to del fons, que és el que fa que tots els botons es
+   llegeixin igual. La pantalla de modes fa servir aquesta mateixa peça: els
+   modes són entrades del menú, no una altra cosa. */
 .link-tile {
   padding: 1rem;
   border: 2px solid var(--line);
@@ -742,33 +787,14 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   box-shadow: 0 3px 0 var(--line);
   transition: transform 0.08s ease, box-shadow 0.08s ease, border-color 0.12s ease, background 0.15s ease;
 }
-.mode-card:active:not(:disabled),
 .link-tile:active:not(:disabled) {
   transform: translateY(3px);
   box-shadow: 0 0 0 var(--line);
   border-color: var(--accent, var(--blue));
 }
 
-/* Targeta de mode: blanca, amb contorn i vora de baix del to del fons, i
-   sense ombra forta. El color el porta la guineu, que és una imatge plana
-   i de color; la targeta no fa cap soroll afegit. */
-.mode-card {
-  --accent: var(--blue-deep);
-  --tint: var(--blue-wash);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  width: 100%;
-  min-height: var(--tap);
-  text-align: left;
-  color: var(--text);
-}
-.mode-card:hover:not(:disabled):not(:active) {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--tint) 35%, white);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 0 var(--line);
-}
+/* La imatge del mode dins l'entrada. La guineu és un dibuix pla i de color,
+   i el fons blanc rodó és el que la fa llegir sobre la targeta blanca. */
 .mode-icon {
   display: grid;
   place-items: center;
@@ -780,10 +806,8 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   border-radius: 50%;
   background: var(--surface);
 }
-.mode-title { font-weight: 800; font-size: 1.05rem; line-height: 1.25; letter-spacing: -0.01em; }
 .mode-icon img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .mode-icon-image { background: transparent; }
-.mode-sub { font-size: 0.8rem; color: var(--muted); font-weight: 400; line-height: 1.35; }
 
 /* Els tons que diferencien modes i icones. La targeta ja no el fa
    servir: el color el posa `--card-lip` de la família. */
@@ -1021,8 +1045,11 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
 }
 /* Els dibuixos de la guineu es regeixen per l'alçada des de la mateixa caixa
    que les icones de traç: així, quan a mòbil la caixa es fa petita, el
-   dibuix hi va amb ella en comptes de quedar-hi penjant. */
-.link-icon .guineu { height: 1.75rem; }
+   dibuix hi va amb ella en comptes de quedar-hi penjant. L'amplada no
+   s'imposa mai —si es fes, el navegador prendria el `width` de l'atribut de
+   la imatge i el dibuix desbordaria la targeta. */
+.link-icon img,
+.link-icon .guineu { height: 1.75rem; width: auto; object-fit: contain; }
 .link-tile-body { display: flex; flex-direction: column; gap: 0.05rem; min-width: 0; }
 .link-tile-label {
   font-size: 0.95rem;
@@ -1044,15 +1071,56 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
 .t-green { --accent: #2f8f28; }
 .t-coral { --accent: var(--coral-deep); }
 
-/* Estat «ja jugat avui»: deixa de cridar a l'atenció i ofereix compartir. */
+/* Estat «ja jugat avui»: la mateixa peça del repte diari, amb el resultat
+   a dalt en lloc de l'endevinalla. Es queda amb el degradat i la vora que
+   té la de jugar —el menú no ha de semblar una altra app quan avui ja has
+   jugat— i el que canvia és el contingut, no la carta. */
 .daily-card.is-done {
-  background: var(--orange-wash);
-  color: var(--orange-ink);
-  box-shadow: inset 0 0 0 2px var(--orange), var(--shadow-sm);
+  justify-content: flex-start;
+  gap: 0.75rem;
 }
-.daily-card.is-done:active { transform: none; box-shadow: inset 0 0 0 2px var(--orange); }
-.daily-card.is-done .daily-squares { letter-spacing: 0.15rem; }
-.daily-score { font-weight: 700; font-size: 1.15rem; }
+/* Puntuació: xapa blanca, com el «Jugar ara» de la targeta de partida. */
+.daily-score {
+  padding: 0.25rem 0.7rem;
+  border-radius: var(--r-pill);
+  background: #fff;
+  color: var(--orange-ink);
+  font-weight: 900;
+  font-size: 1.05rem;
+  box-shadow: 0 2px 0 rgba(143, 61, 20, 0.2);
+}
+/* Els quadrats del resultat porten un anell blanc fi: sobre el degradat
+   taronja els colors es separen de la carta i no semblen adhesius. */
+.daily-card.is-done .score-tile { border-color: rgba(255, 255, 255, 0.6); }
+/* El requadre no és un botó —només hi ha «Compartir»—, així que en prémer la
+   resta de la carta no ha de baixar ni perdre la vora. */
+.daily-card.is-done:active {
+  transform: none;
+  box-shadow: 0 4px 0 var(--card-lip);
+}
+/* Compartir és la única acció del dia: mateixa píndola blanca que el
+   «Jugar ara», perquè la targeta parli igual estigui jugat o no. */
+.daily-card.is-done .share-btn {
+  --btn: #fff;
+  --btn-shadow: rgba(143, 61, 20, 0.22);
+  align-self: flex-start;
+  min-height: var(--tap);
+  padding: 0.5rem 1.1rem;
+  border: 0;
+  border-radius: var(--r-pill);
+  color: var(--orange-ink);
+  font-weight: 900;
+  font-size: 0.95rem;
+}
+.daily-card.is-done .share-btn:hover:not(:disabled):not(:active) {
+  background: #fff;
+  filter: brightness(1.04);
+}
+.daily-card.is-done .share-btn:active:not(:disabled) {
+  box-shadow: 0 0 0 rgba(143, 61, 20, 0.22);
+}
+/* A altres pantalles (col·lecció, perfil) «Compartir» sí que va com a botó
+   discret de fons blanc i vora blanca. */
 .share-btn {
   --btn: var(--surface);
   --btn-shadow: var(--line);
@@ -1632,13 +1700,16 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   min-height: var(--tap);
   transition: border-color 0.2s ease;
 }
-/* Sense bicolor en verd quan té el focus: era una barra de color
-   inoportuna just damunt del selector. */
-.emoji-input-wrapper:focus-within { border-color: var(--blue); }
+/* El camp d'emojis no té contorn propi: dibuixa dins de l'envoltor i el
+   contenidor fa de caixa. Abans l'envoltor es tornava blau sencer quan
+   tenia el focus dins i llegia com una barra de color sota el selector. Ara
+   el marc no canvia de color i el senyal de focus és l'anell estàndel de
+   l'app, que és el mateix que a la resta de botons i camps. */
+.emoji-input-wrapper:focus-within { border-color: var(--line); }
 .emoji-input-field {
   flex: 1;
   border: none !important;
-  outline: none !important;
+  outline: none;
   padding: 0 !important;
   min-height: auto !important;
   box-shadow: none !important;
@@ -1647,6 +1718,14 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   cursor: pointer;
   background: transparent !important;
   color: var(--text);
+}
+/* Sense `!important` a l'anell: aquí el focus sí que ha de veure's, i és la
+   regla global del document la que el dibuixa (3 px, amb el desplaçament
+   estàndard), al voltant del text i no de tota la caixa. */
+.emoji-input-field:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: var(--r-sm);
 }
 .emoji-input-field::placeholder { font-size: 1.05rem; letter-spacing: normal; color: var(--placeholder); }
 .emoji-input-actions { display: flex; align-items: center; gap: 0.25rem; flex-shrink: 0; }
@@ -1759,8 +1838,17 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   /* A color sempre: en gris llegien com a imatges esborrades. */
   transition: background 0.12s ease;
 }
-.picker-emoji:hover { background: var(--blue-wash); }
-.picker-emoji:active { transform: none; box-shadow: none; }
+/* Els emojis del selector són botons d'una casella i prou: en passar-hi el
+   ratolí canvia de fons i res més. Sense aquest reset, el hover genèric de
+   l'app (0,3,1) els posava la vora de 5 px de sota i els aixecava 1 px, i
+   quedava una barra blau sota cada emoji. */
+.picker-emoji:hover:not(:disabled):not(:active) {
+  background: var(--blue-wash);
+  transform: none;
+  box-shadow: none;
+  filter: none;
+}
+.picker-emoji:active:not(:disabled) { transform: none; box-shadow: none; }
 .picker-emoji.picked {
   background: var(--gold-wash);
   box-shadow: inset 0 0 0 2px var(--gold);
@@ -2115,7 +2203,6 @@ input.wrong { border-color: var(--coral-deep); background: var(--coral-wash); }
   .link-tile-sub { font-size: 0.68rem; }
   .daily-card { padding: 0.8rem 1rem; }
   .daily-squares { font-size: 1.25rem; }
-  .mode-card { padding: 0.8rem 1rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -152,6 +152,15 @@ export default function ProposeForm({ onExit }: { onExit: () => void }) {
               id="p-emojis"
               value={emojis}
               readOnly
+              /* El camp és de mostra: el clic l'obre l'envoltor, que és qui
+                 posa el selector. Sense això, el ratolí li dona el focus i
+                 el navegador hi dibuixa l'anell blau —i en un input de text
+                 el considera sempre focus-visible, encara que hi hagues arribat
+                 amb el punter—, de manera que el marc blau tornava cada vegada
+                 que s'obria el selector. Amb el focus només de teclat, l'anell
+                 segueix apareixent per a qui navega amb el teclado i no en
+                 molestar qui hi arriba amb el dit. */
+              onMouseDown={(e) => e.preventDefault()}
               onKeyDown={(e) => {
                 if (e.key === "Backspace") {
                   e.preventDefault();

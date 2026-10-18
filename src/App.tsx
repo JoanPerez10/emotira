@@ -422,16 +422,21 @@ export default function App() {
             <Icon name="grid" size={20} /> Tots els modes
           </strong>
         </div>
-        <div className="grid">
+        <div className="grid grid--modes">
           {MENU_MODES.map(({ mode: m, icon, title, sub, variant, src }) => (
-            <button key={m} className={`mode-card v-${variant}`} onClick={() => start(m)}>
-              <span className={`mode-icon${src ? " mode-icon-image" : ""}`}>
+            /* Mateixa peça que les entrades de «Descobreix i comunitat» del
+               menú: mateixa classe, mateixa fila d'icona + text i mateix
+               hover. Els modes són entrades del menú, no una altra cosa. */
+            <button key={m} className={`link-tile v-${variant}`} onClick={() => start(m)}>
+              <span className="link-icon">
                 {src
-                  ? <img src={src} alt="" width={1254} height={1254} draggable={false} />
-                  : <Icon name={icon} size={21} />}
+                  ? <img className="guineu" src={src} alt="" height={28} draggable={false} />
+                  : <Icon name={icon} size={22} />}
               </span>
-              <span className="mode-title">{title}</span>
-              <span className="mode-sub">{sub}</span>
+              <span className="link-tile-body">
+                <span className="link-tile-label">{title}</span>
+                <span className="link-tile-sub">{sub}</span>
+              </span>
             </button>
           ))}
         </div>
@@ -552,6 +557,9 @@ export default function App() {
         {todayResult ? (
           <div className="daily-card is-done">
             <div className="daily-head">
+              <span className={"mode-icon mode-icon-image daily-icon"}>
+                <img src="/assets/repte-diari-guineu.png" alt="" width={1254} height={1254} draggable={false} />
+              </span>
               <span className="daily-title">Avui ja has jugat</span>
               <span className="daily-score">
                 {todayResult.score}/{todayResult.max}
@@ -559,9 +567,6 @@ export default function App() {
             </div>
             <DailyTiles glyphs={todayResult.results} />
             <button type="button" className="share-btn" onClick={share}>
-              <span className={"mode-icon mode-icon-image"}>
-                <img src="/assets/repte-diari-guineu.png" alt="" width={1254} height={1254} draggable={false} />
-              </span>
               {copied ? "Copiat" : "Compartir resultat"}
             </button>
           </div>
