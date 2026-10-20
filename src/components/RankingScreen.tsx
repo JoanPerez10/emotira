@@ -5,6 +5,7 @@ import { MODE_METRIC } from "../modes";
 import type { Mode } from "../types";
 import ModeTabs from "./ModeTabs";
 import LeaderRowItem from "./LeaderRowItem";
+import GuineuIcon from "./GuineuIcon";
 
 export default function RankingScreen({
   session,
@@ -49,7 +50,7 @@ export default function RankingScreen({
     <main className="app">
       <div className="topbar">
         <button className="back" onClick={onExit}>← Menú</button>
-        <strong>🏅 Rànquing</strong>
+        <strong className="topbar-title"><GuineuIcon name="ranking" size={24} /> Rànquing</strong>
       </div>
 
       <ModeTabs mode={mode} onChange={selectMode} />
@@ -74,7 +75,9 @@ export default function RankingScreen({
       {!session && (
         <div>
           <p>Entra o crea un compte per sortir al rànquing.</p>
-          <button onClick={onLogin}>👤 Entrar / Crear compte</button>
+          <button onClick={onLogin}>
+            <GuineuIcon name="profile" size={20} /> Entrar / Crear compte
+          </button>
         </div>
       )}
     </main>

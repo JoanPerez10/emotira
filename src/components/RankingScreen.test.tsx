@@ -32,7 +32,7 @@ describe('RankingScreen component', () => {
 
     render(<RankingScreen session={mockSession} onExit={handleExit} onLogin={vi.fn()} />)
 
-    expect(screen.getByText('🏅 Rànquing')).toBeInTheDocument()
+    expect(screen.getByText('Rànquing')).toBeInTheDocument()
 
     // Botó per sortir
     const backBtn = screen.getByRole('button', { name: '← Menú' })

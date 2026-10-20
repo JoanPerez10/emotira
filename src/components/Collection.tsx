@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import CatalunyaMap from "./CatalunyaMap";
+import GuineuIcon from "./GuineuIcon";
 import { MAP_COMARQUES, MUNICIPIS } from "../data/catalunyaMap";
 import type { Puzzle } from "../data/puzzles";
 import { buildCollection } from "../utils/collection";
@@ -207,12 +208,12 @@ export default function Collection({ pool, unlocked, onExit }: Props) {
                       <span>{e.comarca || "Comarca per determinar"}</span>
                       {e.unlocked && <em>{e.puzzle.explanation}</em>}
                     </div>
-                    <span
-                      className="town-status"
-                      role="img"
-                      aria-label={e.unlocked ? "Descobert" : "Bloquejat"}
-                    >
-                      {e.unlocked ? "✅" : "🔒"}
+                    <span className="town-status">
+                      <GuineuIcon
+                        name={e.unlocked ? "check" : "lock"}
+                        size={22}
+                        label={e.unlocked ? "Descobert" : "Bloquejat"}
+                      />
                     </span>
                   </li>
                 ))}

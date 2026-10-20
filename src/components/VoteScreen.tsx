@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import type { Proposal, Tally } from "../api/types";
 import { votedStorageKey } from "../api/voter";
+import GuineuIcon from "./GuineuIcon";
 
 const VOTED_KEY = votedStorageKey(api.mode);
 
@@ -13,7 +14,13 @@ const loadVoted = (): Record<number, 1 | -1> => {
   }
 };
 
-export default function VoteScreen({ onExit }: { onExit: () => void }) {
+export default function VoteScreen({
+  onExit,
+  onPropose,
+}: {
+  onExit: () => void;
+  onPropose?: () => void;
+}) {
   const [items, setItems] = useState<Proposal[]>([]);
   const [tallies, setTallies] = useState<Record<number, Tally>>({});
   const [voted, setVoted] = useState<Record<number, 1 | -1>>(loadVoted);
@@ -61,9 +68,20 @@ export default function VoteScreen({ onExit }: { onExit: () => void }) {
     <main className="app">
       <div className="topbar">
         <button className="back" onClick={onExit}>← Menú</button>
-        <strong>🗳️ Vota propostes</strong>
+        <strong className="topbar-title"><GuineuIcon name="vote" size={22} /> Vota propostes</strong>
       </div>
       <p>Ajuda a decidir quins trencaclosques entren al joc.</p>
+
+      {/* Proposar i votar són el mateix bucle, així que comparteixen
+          pantalla: qui juga entra per aquí i descobreix que pot enviar
+          la seva quan li sembli que en cal. */}
+      {onPropose && (
+        <div className="actions">
+          <button className="secondary" onClick={onPropose}>
+            <GuineuIcon name="idea" size={20} /> Proposa un poble
+          </button>
+        </div>
+      )}
 
       {loading && <p>Carregant…</p>}
       {error && <p className="error" role="alert">{error}</p>}

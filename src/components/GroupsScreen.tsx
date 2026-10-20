@@ -5,6 +5,7 @@ import { MODE_METRIC } from "../modes";
 import type { Mode } from "../types";
 import ModeTabs from "./ModeTabs";
 import LeaderRowItem from "./LeaderRowItem";
+import GuineuIcon from "./GuineuIcon";
 
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : "Alguna cosa ha fallat.");
 
@@ -118,7 +119,7 @@ export default function GroupsScreen({
       <button className="back" onClick={selected ? () => setSelected(null) : onExit}>
         ← {selected ? "Els meus grups" : "Menú"}
       </button>
-      <strong>👥 Grups</strong>
+      <strong className="topbar-title"><GuineuIcon name="group" size={22} /> Grups</strong>
     </div>
   );
 
@@ -127,7 +128,9 @@ export default function GroupsScreen({
       <main className="app">
         {header}
         <p>Per crear un grup o unir-t'hi, necessites un compte.</p>
-        <button onClick={onLogin}>👤 Entrar / Crear compte</button>
+        <button onClick={onLogin}>
+          <GuineuIcon name="profile" size={20} /> Entrar / Crear compte
+        </button>
       </main>
     );
   }
@@ -140,7 +143,15 @@ export default function GroupsScreen({
         <h2>{selected.name}</h2>
         <p>
           Codi per unir-s'hi: <span className="code">{selected.code}</span>{" "}
-          <button className="ghost" onClick={copyCode}>{copied ? "Copiat ✅" : "Copiar"}</button>
+          <button className="ghost" onClick={copyCode}>
+            {copied ? (
+              <>
+                <GuineuIcon name="check" size={18} /> Copiat
+              </>
+            ) : (
+              "Copiar"
+            )}
+          </button>
         </p>
         <p className="progress">{selected.members} membres</p>
 

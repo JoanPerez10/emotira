@@ -27,7 +27,7 @@ describe('Game component', () => {
     render(
       <Game
         title="Clàssic"
-        icon="target"
+        iconSrc="/assets/endivina-deu-guineu.png"
         deck={mockPuzzles}
         pool={mockPuzzles}
         onExit={handleExit}
@@ -41,14 +41,76 @@ describe('Game component', () => {
     expect(screen.getByRole('button', { name: '← Menú' })).toBeInTheDocument()
   })
 
-  it('crida a onExit en prémer el botó de tornar al menú', () => {
-    const handleExit = vi.fn()
+  it('posa el dibuix del mode a la capçalera, no una icona de traç', () => {
+    const { container } = render(
+      <Game
+        title="Repte diari"
+        iconSrc="/assets/repte-diari-guineu.png"
+        deck={mockPuzzles}
+        pool={mockPuzzles}
+        onExit={vi.fn()}
+        onFinish={vi.fn()}
+      />
+    )
+
+    const mark = container.querySelector('.topbar-mark')
+    expect(mark).toHaveAttribute('src', '/assets/repte-diari-guineu.png')
+    // Decorative: el títol ja diu de què va la partida.
+    expect(mark).toHaveAttribute('alt', '')
+  })
+
+  it('els dibuixos de marca són els que hi ha a la interfície', () => {
+    const { container } = render(
+      <Game
+        title="Clàssic"
+        iconSrc="/assets/endivina-deu-guineu.png"
+        deck={mockPuzzles}
+        pool={mockPuzzles}
+        onExit={vi.fn()}
+        onFinish={vi.fn()}
+      />
+    )
+
+    // Les pistes porten la bombeta de «Proposa una idea», no la icona de traç.
+    for (let i = 0; i < 3; i++) {
+      fireEvent.click(screen.getByRole('button', { name: /Pista/i }))
+    }
+    const hints = container.querySelectorAll('.hint')
+    expect(hints).toHaveLength(3)
+    for (const hint of hints) {
+      expect(hint.querySelector('img')?.getAttribute('src')).toBe('/assets/idea-guineu.png')
+      expect(hint.querySelector('svg')).toBeNull()
+    }
+  })
+
+  it('«Em rendeixo» va fora de la fila d\'accions, per no competir-hi', () => {
+    const { container } = render(
+      <Game
+        title="Clàssic"
+        iconSrc="/assets/endivina-deu-guineu.png"
+        deck={mockPuzzles}
+        pool={mockPuzzles}
+        onExit={vi.fn()}
+        onFinish={vi.fn()}
+      />
+    )
+
+    const surrender = screen.getByRole('button', { name: 'Em rendeixo' })
+    expect(surrender).toHaveClass('surrender')
+    expect(container.querySelector('.actions')).not.toContainElement(surrender)
+    expect(container.querySelector('.surrender-row')).toContainElement(surrender)
+    // La fila d'accions es queda amb el que fa avançar la partida.
+    expect(screen.getByRole('button', { name: 'Comprovar' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Pista/i })).toBeInTheDocument()
+  })
+
+  it('crida a onExit en prémer el botó de tornar al menú', () => {    const handleExit = vi.fn()
     const handleFinish = vi.fn()
 
     render(
       <Game
         title="Clàssic"
-        icon="target"
+        iconSrc="/assets/endivina-deu-guineu.png"
         deck={mockPuzzles}
         pool={mockPuzzles}
         onExit={handleExit}
@@ -69,7 +131,7 @@ describe('Game component', () => {
     render(
       <Game
         title="Clàssic"
-        icon="target"
+        iconSrc="/assets/endivina-deu-guineu.png"
         deck={mockPuzzles}
         pool={mockPuzzles}
         onExit={handleExit}
@@ -104,7 +166,7 @@ describe('Game component', () => {
     render(
       <Game
         title="Clàssic"
-        icon="target"
+        iconSrc="/assets/endivina-deu-guineu.png"
         deck={mockPuzzles}
         pool={mockPuzzles}
         onExit={handleExit}
@@ -145,7 +207,7 @@ describe('Game component', () => {
     render(
       <Game
         title="Clàssic"
-        icon="target"
+        iconSrc="/assets/endivina-deu-guineu.png"
         deck={mockPuzzles}
         pool={mockPuzzles}
         onExit={vi.fn()}
@@ -170,7 +232,7 @@ describe('Game component', () => {
     render(
       <Game
         title="Clàssic"
-        icon="target"
+        iconSrc="/assets/endivina-deu-guineu.png"
         deck={mockPuzzles.slice(0, 1)}
         pool={mockPuzzles}
         onExit={vi.fn()}
@@ -205,7 +267,7 @@ describe('Game component', () => {
     render(
       <Game
         title="Clàssic"
-        icon="target"
+        iconSrc="/assets/endivina-deu-guineu.png"
         deck={mockPuzzles.slice(0, 1)}
         pool={mockPuzzles}
         hard={true}
@@ -246,7 +308,7 @@ describe('Game component', () => {
     render(
       <Game
         title="Mode difícil"
-        icon="flame"
+        iconSrc="/assets/endivina-deu-guineu.png"
         deck={mockThreePuzzles}
         pool={mockThreePuzzles}
         hard={true}
@@ -327,7 +389,7 @@ describe('Game component', () => {
     render(
       <Game
         title="Mode difícil"
-        icon="flame"
+        iconSrc="/assets/endivina-deu-guineu.png"
         deck={mockTwoPuzzles}
         pool={mockTwoPuzzles}
         hard={true}
@@ -379,7 +441,7 @@ describe('Game component', () => {
     render(
       <Game
         title="Música"
-        icon="music"
+        iconSrc="/assets/endivina-deu-guineu.png"
         deck={mockPuzzles}
         pool={mockPuzzles}
         onExit={vi.fn()}
@@ -408,7 +470,7 @@ describe('Game component', () => {
     const { unmount } = render(
       <Game
         title="Infinit"
-        icon="infinity"
+        iconSrc="/assets/endivina-deu-guineu.png"
         deck={mockPuzzles.slice(0, 1)}
         pool={mockPuzzles}
         endless={true}
@@ -435,7 +497,7 @@ describe('Game component', () => {
     render(
       <Game
         title="Infinit"
-        icon="infinity"
+        iconSrc="/assets/endivina-deu-guineu.png"
         deck={mockPuzzles.slice(0, 1)}
         pool={mockPuzzles}
         endless={true}
@@ -453,7 +515,7 @@ describe('Game component', () => {
     render(
       <Game
         title="Infinit"
-        icon="infinity"
+        iconSrc="/assets/endivina-deu-guineu.png"
         deck={mockPuzzles.slice(0, 1)}
         pool={mockPuzzles}
         endless={true}
@@ -488,7 +550,7 @@ describe('Game component', () => {
     render(
       <Game
         title="Clàssic"
-        icon="target"
+        iconSrc="/assets/endivina-deu-guineu.png"
         deck={puzzleWithApos}
         pool={puzzleWithApos}
         onExit={vi.fn()}

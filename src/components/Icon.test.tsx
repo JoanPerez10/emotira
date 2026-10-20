@@ -17,6 +17,16 @@ describe('Icon component', () => {
     'check',
     'plus',
     'music',
+    'grid',
+    'chevron',
+    'play',
+    'user',
+    'users',
+    'crown',
+    'chart',
+    'pencil',
+    'ballot',
+    'compass',
   ]
 
   it.each(iconNames)('renderitza correctament la icona %s', (name) => {

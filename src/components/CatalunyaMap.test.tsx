@@ -96,7 +96,7 @@ describe('CatalunyaMap component', () => {
     expect(screen.getByText(firstMuni.n)).toBeInTheDocument()
     expect(screen.getByText('🌲🏔️')).toBeInTheDocument()
     expect(screen.getByText('Bosc de Carlac')).toBeInTheDocument()
-    expect(screen.getByText('✅ Descobert')).toBeInTheDocument()
+    expect(screen.getByText('Descobert')).toBeInTheDocument()
   })
 
   it('mostra l\'estat bloquejat quan se selecciona un municipi no descobert', () => {
@@ -110,7 +110,7 @@ describe('CatalunyaMap component', () => {
     fireEvent.pointerUp(targetPath!, { pointerId: 1, clientX: 50, clientY: 50 })
 
     expect(screen.getByText(secondMuni.n)).toBeInTheDocument()
-    expect(screen.getByText('🔒 Per descobrir')).toBeInTheDocument()
+    expect(screen.getByText('Per descobrir')).toBeInTheDocument()
   })
 
   it('suporta hover de ratolí i neteja en sortir', () => {

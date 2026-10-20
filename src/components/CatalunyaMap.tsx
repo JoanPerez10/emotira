@@ -2,6 +2,7 @@ import { memo, useCallback, useEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { MAP_COMARQUES, MAP_H, MAP_W, MUNICIPIS } from "../data/catalunyaMap";
 import type { Collection } from "../utils/collection";
+import GuineuIcon from "./GuineuIcon";
 
 const MAX_ZOOM = 14;
 const BY_ID = new Map(MUNICIPIS.map((m) => [m.id, m]));
@@ -251,9 +252,15 @@ export default function CatalunyaMap({ collection }: { collection: Collection })
               <span>{MAP_COMARQUES[focus.c - 1]}</span>
               {discovered.length > 0 && <em>{discovered[0].puzzle.explanation}</em>}
             </div>
-            <span className={`badge ${discovered.length > 0 ? "badge-on" : ""}`}>
-              {discovered.length > 0 ? "✅ Descobert" : "🔒 Per descobrir"}
-            </span>
+            {discovered.length > 0 ? (
+              <span className="badge badge-on">
+                <GuineuIcon name="check" size={18} /> Descobert
+              </span>
+            ) : (
+              <span className="badge">
+                <GuineuIcon name="lock" size={16} /> Per descobrir
+              </span>
+            )}
           </>
         ) : (
           <p className="map-hint">

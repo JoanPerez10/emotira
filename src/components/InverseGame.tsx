@@ -3,7 +3,6 @@ import type { Puzzle } from "../data/puzzles";
 import type { GameResult, PuzzleResult } from "../types";
 import { calculateScore } from "../modes";
 import { eliminateDistractors, inverseOptions, splitEmojis } from "../utils/inverse";
-import Icon from "./Icon";
 
 interface Props {
   deck: Puzzle[];
@@ -33,7 +32,10 @@ export default function InverseGame({ deck, pool, onSolve, onFinish, onExit }: P
     <main className="app inverse-game">
       <div className="topbar">
         <button className="back" onClick={onExit}>← Menú</button>
-        <strong className="topbar-title"><Icon name="reverse" size={18} /> Invers</strong>
+        <strong className="topbar-title">
+          <img className="topbar-mark" src="/assets/invers-guineu.png" alt="" width={1254} height={1254} draggable={false} />
+          Invers
+        </strong>
       </div>
       <div className="steps" aria-hidden="true">
         {deck.map((_, i) => <span key={i} className={`step${i === index ? " step-now" : i < index ? results[i].status === "correct" ? " step-ok" : " step-nope" : ""}`} />)}
@@ -169,9 +171,13 @@ function InverseRound({ puzzle, pool, isLast, onSolve, onDone }: {
         <button type="button" className="accent" disabled={!playing || hints >= 2} onClick={useHint}>
           {hints >= 2 ? "Ja ho saps tot" : `Pista (${hints}/2)`}
         </button>
-        <button type="button" className="ghost" disabled={!playing} onClick={surrender}>Em rendeixo</button>
         </>}
       </div>
+      {playing && (
+        <div className="surrender-row">
+          <button type="button" className="surrender" onClick={surrender}>Em rendeixo</button>
+        </div>
+      )}
       </div>
     </section>
   );

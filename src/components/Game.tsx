@@ -6,13 +6,14 @@ import { shuffle } from "../utils/random";
 import type { Puzzle } from "../data/puzzles";
 import { parseWords } from "../utils/words";
 import LetterInput, { type LetterInputHandle } from "./LetterInput";
-import Icon, { type IconName } from "./Icon";
+import GuineuIcon from "./GuineuIcon";
 
 type Status = "playing" | "correct" | "revealed";
 
 interface Props {
   title: string;
-  icon: IconName;
+  /** Retrat del mode a la capçalera: el mateix dibuix que al menú. */
+  iconSrc: string;
   deck: Puzzle[];
   endless?: boolean;
   hard?: boolean;
@@ -27,7 +28,7 @@ const MAX_FAILS = 3;
 
 export default function Game({
   title,
-  icon,
+  iconSrc,
   deck: initialDeck,
   pool,
   endless = false,
@@ -160,7 +161,7 @@ export default function Game({
       <div className="topbar">
         <button className="back" onClick={onExit}>← Menú</button>
         <strong className="topbar-title">
-          <Icon name={icon} size={18} />
+          <img className="topbar-mark" src={iconSrc} alt="" width={1254} height={1254} draggable={false} />
           {title}
         </strong>
       </div>
@@ -189,11 +190,9 @@ export default function Game({
           {endless ? `Ratxa: ${run} · ${score} punts` : `${title === "Música" ? "Grup" : "Poble"} ${index + 1} de ${deck.length}`}
         </span>
         {hard && (
-          <span className="hearts" aria-label={`Intents restants: ${MAX_FAILS - fails}`}>
+          <span className="hearts" role="img" aria-label={`Intents restants: ${MAX_FAILS - fails}`}>
             {Array.from({ length: MAX_FAILS }, (_, i) => (
-              <span key={i} className={i < fails ? "heart-lost" : undefined} aria-hidden="true">
-                ❤️
-              </span>
+              <GuineuIcon key={i} name={i < fails ? "lifeDown" : "lifeUp"} size={22} />
             ))}
           </span>
         )}
@@ -203,7 +202,7 @@ export default function Game({
 
       {hintLines.map((h) => (
         <p key={h} className="hint">
-          <Icon name="lightbulb" size={18} />
+          <GuineuIcon name="idea" size={20} />
           <span>{h}</span>
         </p>
       ))}
@@ -245,7 +244,10 @@ export default function Game({
                 {hints >= 3 ? "Ja ho saps tot" : `Pista (${hints}/3)`}
               </button>
             )}
-            <button type="button" className="ghost" onClick={giveUp}>
+          </div>
+
+          <div className="surrender-row">
+            <button type="button" className="surrender" onClick={giveUp}>
               Em rendeixo
             </button>
           </div>
