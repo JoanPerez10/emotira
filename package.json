@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@fontsource-variable/nunito": "^5.3.0",
+    "@fontsource/noto-color-emoji": "^5.3.2",
     "@supabase/supabase-js": "^2.117.3",
     "country-flag-emoji-polyfill": "^0.1.10",
     "react": "^19.2.8",

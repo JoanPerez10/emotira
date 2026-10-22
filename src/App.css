@@ -124,16 +124,14 @@
 
 body {
   margin: 0;
-  /* "Twemoji Country Flags" només cobreix les lletres de bandera (unicode-range),
-     la resta del text continua amb Nunito. La injecta main.tsx si cal. */
-  /* "Twemoji Country Flags" només cobreix banderes. Les fonts d'emoji en
-     color van després de les de text, i s'escriuen pel nom perquè és
-     l'única manera que el navegador pugi fins a elles: sense això, un
-     emoji que cap font de text no té es dibuixa com a caixa buida. Són
-     les mateixes que ja usa el projecte per a les banderes, i cobreixen
-     Windows, macOS/iOS i Android. */
-  font-family: "Twemoji Country Flags", "Nunito Variable", "Nunito", ui-rounded, "Segoe UI Variable", system-ui,
-    "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Symbol",
+  /* "Twemoji Country Flags" només cobreix banderes. Els emojis els pinta
+     "Emotira Emoji" (Noto Color Emoji autoallotjada, vegeu emoji-font.css),
+     perquè es vegin igual a tots els sistemes i amb el dibuix original del
+     joc. Els seus @font-face porten unicode-range, així que només afecten
+     els emojis i no toquen les lletres de Nunito. Després queden les fonts
+     del sistema com a xarxa de seguretat. */
+  font-family: "Twemoji Country Flags", "Nunito Variable", "Nunito", "Emotira Emoji", ui-rounded,
+    "Segoe UI Variable", system-ui, "Segoe UI Emoji", "Apple Color Emoji", "Segoe UI Symbol",
     -apple-system, "Segoe UI", Roboto, sans-serif;
   /* El fons no és un color pla: hi ha tres llums de color —taronja, blava i
      préssoc— que donen profunditat i recorden els colors de la guineu. Van

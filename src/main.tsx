@@ -4,6 +4,7 @@ import App from './App.tsx'
 import DevBanner from "./components/DevBanner.tsx";
 import PawSwarm from "./components/PawSwarm.tsx";
 import flagFontUrl from "country-flag-emoji-polyfill/dist/TwemojiCountryFlags.woff2?url";
+import "./emoji-font.css";
 
 // Banderes: sempre, sense detector. El polyfill del paquet només
 // injecta la font quan el navegador no sabria dibuixar *cap* emoji, però
