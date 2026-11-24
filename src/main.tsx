@@ -4,6 +4,11 @@ import App from './App.tsx'
 import DevBanner from "./components/DevBanner.tsx";
 import PawSwarm from "./components/PawSwarm.tsx";
 import flagFontUrl from "country-flag-emoji-polyfill/dist/TwemojiCountryFlags.woff2?url";
+// Emojis: Noto Color Emoji autoallotjada (src/emojiFont.ts, generat amb
+// `npm run build:emoji-font`), perquè es vegin igual a tots els sistemes.
+// S'injecta com les banderes, perquè són el mateix tipus de font: una
+// família amb unicode-range que només toca els seus codis.
+import { emojiFontCss } from "./emojiFont";
 
 // Banderes: sempre, sense detector. El polyfill del paquet només
 // injecta la font quan el navegador no sabria dibuixar *cap* emoji, però
@@ -20,6 +25,10 @@ flagFont.textContent = `@font-face {
   font-display: swap;
 }`;
 document.head.appendChild(flagFont);
+
+const emojiFont = document.createElement("style");
+emojiFont.textContent = emojiFontCss;
+document.head.appendChild(emojiFont);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

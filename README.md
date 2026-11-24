@@ -44,6 +44,7 @@ npm run build      # compila TypeScript + bundle de producció
 npm run preview    # serveix el build
 npm run lint       # ESLint
 npm run build:map  # regenera les dades del mapa
+npm run build:emoji-font  # regenera src/emoji-font.css (fonts d'emoji)
 ```
 
 ## Proves

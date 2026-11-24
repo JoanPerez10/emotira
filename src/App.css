@@ -103,6 +103,13 @@
 
   --tap: 48px; /* objectiu mínim de toc (WCAG 2.5.8) */
 
+  /* Pila per als emojis que dibuixa el joc. Van *abans* de Nunito perquè
+     un emoji compost (4️⃣, 👩‍⚕️) s'ha de resoldre sencer a la font d'emoji:
+     si primer hi hagués Nunito, la xifra del 4️⃣ sortiria de Nunito i la
+     resta de la font d'emoji, i el keycap quedaria trencat. */
+  --font-emoji: "Twemoji Country Flags", "Noto Color Emoji", "Nunito Variable", "Nunito", system-ui,
+    sans-serif;
+
   /* Espaiat. Una sola base (12 px) per a tot el menú: entre blocs
      i entre les peces de dins d'una targeta. L'única excepció és
      l'encapçalament de secció, que se separa del bloc anterior per
@@ -124,16 +131,14 @@
 
 body {
   margin: 0;
-  /* "Twemoji Country Flags" només cobreix les lletres de bandera (unicode-range),
-     la resta del text continua amb Nunito. La injecta main.tsx si cal. */
-  /* "Twemoji Country Flags" només cobreix banderes. Les fonts d'emoji en
-     color van després de les de text, i s'escriuen pel nom perquè és
-     l'única manera que el navegador pugi fins a elles: sense això, un
-     emoji que cap font de text no té es dibuixa com a caixa buida. Són
-     les mateixes que ja usa el projecte per a les banderes, i cobreixen
-     Windows, macOS/iOS i Android. */
-  font-family: "Twemoji Country Flags", "Nunito Variable", "Nunito", ui-rounded, "Segoe UI Variable", system-ui,
-    "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Symbol",
+  /* "Twemoji Country Flags" només cobreix banderes i "Noto Color Emoji" és
+     la font d'emoji que autoallotgem (la injecta main.tsx): així els emojis
+     es veuen igual a tots els sistemes. Totes dues declaren unicode-range,
+     de manera que no toquen les lletres de Nunito. La resta de la pila és
+     la xarxa de seguretat: si una font no arriba a carregar-se, el sistema
+     encara en té una altra. */
+  font-family: "Twemoji Country Flags", "Nunito Variable", "Nunito", "Noto Color Emoji", ui-rounded,
+    "Segoe UI Variable", system-ui, "Segoe UI Emoji", "Apple Color Emoji", "Segoe UI Symbol",
     -apple-system, "Segoe UI", Roboto, sans-serif;
   /* El fons no és un color pla: hi ha tres llums de color —taronja, blava i
      préssoc— que donen profunditat i recorden els colors de la guineu. Van
@@ -151,6 +156,21 @@ body {
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   -webkit-text-size-adjust: 100%;
+}
+
+/* On el joc ensenya emojis (pistes, col·lecció, mapa, selector) la pila
+   d'emoji va primer: així els emojis compostos es resolen sencers i surten
+   en color, sense que cap lletra de Nunito se'ls mengi. */
+.puzzle-emoji,
+.emojis,
+.town-emoji,
+.map-info-emoji,
+.daily-squares,
+.inverse-slot,
+.inverse-option,
+.picker-emoji,
+.emoji-input-field {
+  font-family: var(--font-emoji);
 }
 
 /* ============================================================
