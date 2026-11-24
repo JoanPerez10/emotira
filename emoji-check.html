@@ -1,0 +1,135 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Emotira · comprovació d'emojis</title>
+<!--
+  Pàgina de desenvolupament, no forma part del joc: Vite la serveix a
+  /emoji-check.html i el build de producció no la inclou (només compila
+  index.html).
+
+  Ensenya tots els emojis de tots els pobles i grups amb la pila de fonts de
+  debò (App.css + la font d'emoji que injecta main.tsx) i marca en vermell
+  cada emoji que no pinta cap píxel, que és com es veu un glif que falta.
+
+  També pots comprovar-ho sense obrir res:  npm test -- puzzles
+-->
+<script type="module">
+  import "/src/App.css";
+  import { emojiFontCss } from "/src/emojiFont.ts";
+  import { puzzles } from "/src/data/puzzles.ts";
+  import { musicPuzzles } from "/src/data/musicPuzzles.ts";
+  import { splitGraphemes } from "/src/utils/graphemes.ts";
+
+  // La mateixa injecció que fa main.tsx: volem provar el que es publica.
+  const emojiStyle = document.createElement("style");
+  emojiStyle.textContent = emojiFontCss;
+  document.head.appendChild(emojiStyle);
+
+  document.body.insertAdjacentHTML(
+    "afterbegin",
+    `<header class="check-head">
+       <h1>Comprovació d'emojis</h1>
+       <p id="summary">Carregant la font…</p>
+       <p class="check-legend">En vermell, els emojis que no pinten res (els falta el glif).</p>
+     </header>
+     <main id="grid" class="check-grid"></main>`,
+  );
+
+  const grid = document.getElementById("grid");
+  const summary = document.getElementById("summary");
+
+  // Un element amb la classe real del joc, per llegir-ne la pila de fonts.
+  const probe = document.createElement("p");
+  probe.className = "puzzle-emoji";
+  probe.style.position = "absolute";
+  probe.style.visibility = "hidden";
+  document.body.appendChild(probe);
+
+  await document.fonts.ready;
+  const styles = getComputedStyle(probe);
+  const font = `${parseFloat(styles.fontSize)}px ${styles.fontFamily}`;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 96;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+  /** Pinta el grafema aïllat i compta els píxels amb alpha: 0 vol dir forat. */
+  const paints = (grapheme) => {
+    ctx.clearRect(0, 0, 96, 96);
+    ctx.font = font;
+    ctx.textBaseline = "top";
+    ctx.fillStyle = "#000";
+    ctx.fillText(grapheme, 4, 4);
+    const data = ctx.getImageData(0, 0, 96, 96).data;
+    let painted = 0;
+    for (let i = 3; i < data.length; i += 4) if (data[i] > 0) painted++;
+    return painted;
+  };
+
+  const entries = [
+    ...puzzles.map((p) => ({ ...p, kind: "Poble" })),
+    ...musicPuzzles.map((p) => ({ ...p, kind: "Música" })),
+  ];
+
+  const broken = [];
+  let graphemes = 0;
+
+  for (const entry of entries) {
+    const row = document.createElement("section");
+    row.className = "check-row";
+
+    const emojis = document.createElement("p");
+    emojis.className = "puzzle-emoji check-emojis";
+    emojis.textContent = entry.emojis;
+
+    const name = document.createElement("p");
+    name.className = "check-name";
+    name.textContent = entry.answer;
+
+    const meta = document.createElement("p");
+    meta.className = "check-meta";
+    meta.textContent = [entry.kind, entry.comarca].filter(Boolean).join(" · ");
+
+    for (const grapheme of splitGraphemes(entry.emojis)) {
+      graphemes++;
+      if (paints(grapheme) === 0) {
+        broken.push(`${grapheme} (${entry.answer})`);
+        row.classList.add("check-bad");
+      }
+    }
+
+    row.append(emojis, name, meta);
+    grid.appendChild(row);
+  }
+
+  summary.textContent = broken.length
+    ? `${entries.length} entrades · ${graphemes} emojis · ${broken.length} sense dibuixar: ${broken.join(", ")}`
+    : `${entries.length} entrades · ${graphemes} emojis · tots es pinten 🎉`;
+  probe.remove();
+</script>
+
+<style>
+  .check-head { max-width: 62rem; margin: 0 auto; padding: 1.5rem 1rem 0.5rem; }
+  .check-head h1 { margin: 0 0 0.25rem; font-size: 1.5rem; }
+  #summary { margin: 0; font-weight: 800; }
+  .check-legend { margin: 0.25rem 0 0; color: #566; font-size: 0.85rem; }
+  .check-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    gap: 0.75rem;
+    max-width: 62rem;
+    margin: 0 auto;
+    padding: 1rem;
+  }
+  .check-row {
+    background: #fff;
+    border: 2px solid #e6e2d8;
+    border-radius: 0.75rem;
+    padding: 0.6rem;
+    text-align: center;
+  }
+  .check-row .check-emojis { font-size: 2rem; margin: 0 0 0.35rem; }
+  .check-name { margin: 0; font-weight: 800; overflow-wrap: anywhere; }
+  .check-meta { margin: 0.15rem 0 0; color: #667; font-size: 0.8rem; }
+  .check-bad { border-color: #c0392b; background: #fdf0ee; }
+</style>

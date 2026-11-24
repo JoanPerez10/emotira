@@ -8,6 +8,7 @@
     "dev:mock": "vite --mode mock",
     "build": "tsc -b && vite build",
     "build:map": "node scripts/build-map.mjs",
+    "build:emoji-font": "node scripts/build-emoji-font.mjs",
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -17,6 +18,7 @@
   },
   "dependencies": {
     "@fontsource-variable/nunito": "^5.3.0",
+    "@fontsource/noto-color-emoji": "^5.3.2",
     "@supabase/supabase-js": "^2.117.3",
     "country-flag-emoji-polyfill": "^0.1.10",
     "react": "^19.2.8",
